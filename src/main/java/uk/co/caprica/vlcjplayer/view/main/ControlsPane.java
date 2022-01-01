@@ -23,17 +23,16 @@ import static uk.co.caprica.vlcjplayer.Application.application;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JSlider;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
 import uk.co.caprica.vlcj.player.base.LibVlcConst;
+import uk.co.caprica.vlcjplayer.Application;
 import uk.co.caprica.vlcjplayer.event.PausedEvent;
 import uk.co.caprica.vlcjplayer.event.PlayingEvent;
 import uk.co.caprica.vlcjplayer.event.ShowEffectsEvent;
@@ -42,6 +41,7 @@ import uk.co.caprica.vlcjplayer.view.BasePanel;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 
 import com.google.common.eventbus.Subscribe;
+import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 
 final class ControlsPane extends BasePanel {
 
@@ -61,7 +61,14 @@ final class ControlsPane extends BasePanel {
 
     private final Icon volumeHighIcon = newIcon("volume-high");
 
+
     private final Icon volumeMutedIcon = newIcon("volume-muted");
+
+    private final Icon addFavouriteFolder = newIcon("addFavouriteFolder");
+    private final Icon favButtonIcon = newIcon("favorite");
+
+    private final Icon moveFavouriteFolderIcon = newIcon("moveFavouriteFolder");
+
 
     private final JButton playPauseButton;
 
@@ -78,31 +85,59 @@ final class ControlsPane extends BasePanel {
     private final JButton snapshotButton;
 
     private final JButton muteButton;
+    private final JButton addFolder;
+
+    private final JButton moveFavouriteFolder;
+
+    private final List<JButton> favFolderList=new ArrayList<>();
 
     private final JSlider volumeSlider;
 
     ControlsPane(MediaPlayerActions mediaPlayerActions) {
         playPauseButton = new BigButton();
         playPauseButton.setAction(mediaPlayerActions.playbackPlayAction());
+
         previousButton = new StandardButton();
         previousButton.setIcon(previousIcon);
+
         stopButton = new StandardButton();
         stopButton.setAction(mediaPlayerActions.playbackStopAction());
+
         nextButton = new StandardButton();
         nextButton.setIcon(nextIcon);
+
+
         fullscreenButton = new StandardButton();
         fullscreenButton.setIcon(fullscreenIcon);
         extendedButton = new StandardButton();
         extendedButton.setIcon(extendedIcon);
         snapshotButton = new StandardButton();
         snapshotButton.setAction(mediaPlayerActions.videoSnapshotAction());
+        addFolder = new StandardButton();
+        addFolder.setHorizontalAlignment(SwingConstants.LEFT);
+        addFolder.setText("Add Folder");
+        addFolder.setToolTipText("Add new Favourite folder for moving files");
+        addFolder.setIcon(addFavouriteFolder);
+
+
+
+
+        moveFavouriteFolder = new StandardButton();
+        moveFavouriteFolder.setText("Move Folder");
+        moveFavouriteFolder.setToolTipText("Move Favourite folder to place you like");
+        moveFavouriteFolder.setIcon(moveFavouriteFolderIcon);
+
+
+
         muteButton = new StandardButton();
         muteButton.setIcon(volumeHighIcon);
         volumeSlider = new JSlider();
         volumeSlider.setMinimum(LibVlcConst.MIN_VOLUME);
         volumeSlider.setMaximum(LibVlcConst.MAX_VOLUME);
 
-        setLayout(new MigLayout("fill, insets 0 0 0 0", "[]12[]0[]0[]12[]0[]12[]push[]0[]", "[]"));
+
+
+        setLayout(new MigLayout("fill, insets 0 0 0 0", "[]12[]0[]0[]12[]0[]12[]12[]10[]push[]0[]", "[]"));
 
         add(playPauseButton);
         add(previousButton, "sg 1");
@@ -113,6 +148,9 @@ final class ControlsPane extends BasePanel {
         add(extendedButton, "sg 1");
 
         add(snapshotButton, "sg 1");
+        add(addFolder);
+        add(moveFavouriteFolder);
+
 
         add(muteButton, "sg 1");
         add(volumeSlider, "wmax 100");
@@ -125,7 +163,41 @@ final class ControlsPane extends BasePanel {
         });
 
         // FIXME really these should share common actions
-
+        previousButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                application().setFileTrackerToPreviousVideo();
+                application().playNext();
+            }
+        });
+        addFolder.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String folder = JOptionPane.showInputDialog("Enter new folder name:");
+                if(Application.application().isFolderExist(folder)){
+                    AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
+                    return;
+                }
+                JButton newFolder=new StandardButton();
+                newFolder.setText(folder);
+                add(newFolder);
+                favFolderList.add(newFolder);
+                newFolder.addActionListener(new FavFolderButtonEventListener());
+                Application.application().addFavFolder(folder);
+            }
+        });
+        moveFavouriteFolder.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                application().setDestinationFolder();
+            }
+        });
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                application().playNext();
+            }
+        });
         muteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -146,6 +218,8 @@ final class ControlsPane extends BasePanel {
                 application().post(ShowEffectsEvent.INSTANCE);
             }
         });
+        Application.application().setFavFolderButtonList(favFolderList);
+        Application.application().setFavButtonIcon(favButtonIcon);
     }
 
     @Subscribe
@@ -182,4 +256,7 @@ final class ControlsPane extends BasePanel {
     private Icon newIcon(String name) {
         return new ImageIcon(getClass().getResource("/icons/buttons/" + name + ".png"));
     }
+
 }
+
+

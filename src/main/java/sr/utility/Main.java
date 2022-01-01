@@ -2,6 +2,7 @@ package sr.utility;
 
 import sr.basic.Series;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +20,7 @@ public class Main {
     public void driver(){
         showMenu();
 //        Task task = getTaskFromStandardInput();
-        Task task=Task.SHOW_SIZE_OF_FOLDERS ;
+        Task task=Task.LIST_SPECIFIC_TYPE_FILES ;
 //        print("Selected Task: "+task);
 
         switch (task){
@@ -52,14 +53,24 @@ public class Main {
                 showTypesFromFolder("C:\\as\\experiment\\test");
                 break;
             case SEPARATE_VIDEO_AND_PHOTO:
-                moveSpecificTypeFile("C:\\as\\experiment\\test","C:\\as\\experiment\\vedeo",".mp4");
+                moveSpecificTypeFile("C:\\as\\experiment\\test","C:\\as\\experiment\\vedeo",FileHelper.VEDEO_FILES_EXTENSION);
+                break;
+            case LIST_SPECIFIC_TYPE_FILES:
+                showFilesMatchingWithType("C:\\as\\experiment\\vedeo",FileHelper.VEDEO_FILES_EXTENSION);
                 break;
             default :
                 throw new IllegalStateException("Unexpected value: " + task);
         }
     }
 
-    private void moveSpecificTypeFile(String sourceFolder, String destinationFolderStr, String typeOfFile) {
+    private void showFilesMatchingWithType(String sourceFolderStr, Set<String> fileType) {
+        List<File> fileList =FileHelper.getSpecificTypeFiles(sourceFolderStr,fileType);
+        for(File file:fileList){
+            printLine(file.getAbsolutePath());
+        }
+    }
+
+    private void moveSpecificTypeFile(String sourceFolder, String destinationFolderStr, Set<String> typeOfFile) {
         new FileHelper().moveAllTypes(sourceFolder, destinationFolderStr, typeOfFile);
     }
 

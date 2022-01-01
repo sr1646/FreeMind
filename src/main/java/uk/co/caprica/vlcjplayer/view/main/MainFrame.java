@@ -19,6 +19,7 @@
 
 package uk.co.caprica.vlcjplayer.view.main;
 
+import static sr.utility.Output.debug;
 import static uk.co.caprica.vlcjplayer.Application.application;
 import static uk.co.caprica.vlcjplayer.Application.resources;
 import static uk.co.caprica.vlcjplayer.view.action.Resource.resource;
@@ -28,33 +29,16 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.prefs.Preferences;
 
-import javax.swing.AbstractAction;
-import javax.swing.AbstractButton;
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.ButtonGroup;
-import javax.swing.InputMap;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 import uk.co.caprica.vlcj.media.TrackType;
@@ -62,12 +46,12 @@ import uk.co.caprica.vlcj.player.base.LogoPosition;
 import uk.co.caprica.vlcj.player.base.MarqueePosition;
 import uk.co.caprica.vlcj.media.MediaSlaveType;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.base.Logo;
 import uk.co.caprica.vlcj.player.base.Marquee;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.renderer.RendererItem;
+import uk.co.caprica.vlcjplayer.Application;
 import uk.co.caprica.vlcjplayer.event.AfterExitFullScreenEvent;
 import uk.co.caprica.vlcjplayer.event.BeforeEnterFullScreenEvent;
 import uk.co.caprica.vlcjplayer.event.PausedEvent;
@@ -80,13 +64,13 @@ import uk.co.caprica.vlcjplayer.event.ShowMessagesEvent;
 import uk.co.caprica.vlcjplayer.event.SnapshotImageEvent;
 import uk.co.caprica.vlcjplayer.event.StoppedEvent;
 import uk.co.caprica.vlcjplayer.view.BaseFrame;
-import uk.co.caprica.vlcjplayer.view.MouseMovementDetector;
 import uk.co.caprica.vlcjplayer.view.action.StandardAction;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.RendererAction;
 import uk.co.caprica.vlcjplayer.view.snapshot.SnapshotView;
 
 import com.google.common.eventbus.Subscribe;
+import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 
 @SuppressWarnings("serial")
 public final class MainFrame extends BaseFrame {
@@ -162,21 +146,27 @@ public final class MainFrame extends BaseFrame {
 //    private final MouseMovementDetector mouseMovementDetector;
 
     private final List<RendererItem> renderers = new ArrayList<>();
-
-    public MainFrame() {
+    private static final class MainFrameHolder {
+        private static final MainFrame INSTANCE = new MainFrame();
+    }
+    public static MainFrame mainFrame() {
+        return MainFrameHolder.INSTANCE;
+    }
+    private MainFrame() {
         super("vlcj player");
 
         MediaPlayerActions mediaPlayerActions = application().mediaPlayerActions();
 
-        mediaOpenAction = new StandardAction(resource("menu.media.item.openFile")) {
+        mediaOpenAction = new StandardAction(resource("menu.media.item.openFolder")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (JFileChooser.APPROVE_OPTION == fileChooser.showOpenDialog(MainFrame.this)) {
-                    File file = fileChooser.getSelectedFile();
-                    String mrl = file.getAbsolutePath();
-                    application().addRecentMedia(mrl);
-                    application().mediaPlayer().media().play(mrl);
+                File selectedFolder = getSelectedFolder();
+                if(selectedFolder!=null){
+                    application().initFileList(selectedFolder);
+                    application().playNext();
+                    application().setSourceFolder(selectedFolder.getAbsolutePath());
                 }
+
             }
         };
 
@@ -427,7 +417,7 @@ public final class MainFrame extends BaseFrame {
         contentPane.setTransferHandler(new MediaTransferHandler() {
             @Override
             protected void onMediaDropped(String[] uris) {
-                application().mediaPlayer().media().play(uris[0]);
+                playFile(uris[0]);
             }
         });
 
@@ -499,15 +489,22 @@ public final class MainFrame extends BaseFrame {
                     }
                 });
             }
-
+            @Override
+            public void forward(MediaPlayer mediaPlayer) {
+                finishVedeo();
+            }
+            @Override
+            public void backward(MediaPlayer mediaPlayer) {
+                Application.application().setFileTrackerToPreviousVideo();
+                finishVedeo();
+            }
             @Override
             public void finished(MediaPlayer mediaPlayer) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        videoContentPane.showDefault();
-//                        mouseMovementDetector.stop();
-                        application().post(StoppedEvent.INSTANCE);
+                        finishVedeo();
+
                     }
                 });
             }
@@ -517,11 +514,9 @@ public final class MainFrame extends BaseFrame {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        videoContentPane.showDefault();
-//                        mouseMovementDetector.stop();
-                        application().post(StoppedEvent.INSTANCE);
-                        File selectedFile = fileChooser.getSelectedFile(); // FIXME this is flawed with recent file menu
+                        File selectedFile = Application.application().getCurrentlyPlayingFile();
                         JOptionPane.showMessageDialog(MainFrame.this, MessageFormat.format(resources().getString("error.errorEncountered"), selectedFile != null ? selectedFile.getAbsolutePath() : ""), resources().getString("dialog.errorEncountered"), JOptionPane.ERROR_MESSAGE);
+                        finishVedeo();
                     }
                 });
             }
@@ -584,6 +579,64 @@ public final class MainFrame extends BaseFrame {
 //        setLogoAndMarquee(application().callbackMediaPlayerComponent().mediaPlayer());
     }
 
+    public File getSelectedFolder() {
+        File selectedFolder=null;
+        Preferences prefs = Preferences.userNodeForPackage(MainFrame.class);
+        fileChooser.setCurrentDirectory(new File(prefs.get("chooserDirectory",".")));
+        fileChooser.setDialogTitle("Select Folder");
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //
+        // disable the "All files" option.
+        //
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        //
+
+        if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION) {
+            debug("getCurrentDirectory(): "
+                    + fileChooser.getCurrentDirectory());
+            debug("getSelectedFile() : "
+                    + fileChooser.getSelectedFile());
+            selectedFolder=fileChooser.getSelectedFile();
+        } else {
+            System.out.println("No Selection ");
+            AlertBox.warningBox("No folder Selected","No folder Selected");
+        }
+        return selectedFolder;
+    }
+    public boolean moveConfirmation(String fileDetail){
+        //default icon, custom title
+
+        Object[] options = {"Yes, Move Them",
+                "No wait I have to check again"};
+        String title="File list with folder going to move";
+        JTextArea jta = new JTextArea(fileDetail);
+        JScrollPane jsp = new JScrollPane(jta){
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(1024, 768);
+            }
+        };
+        int n = JOptionPane.showOptionDialog(null,
+                jsp,
+                title,
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,     //do not use a custom Icon
+                options,  //the titles of buttons
+                options[0]); //default button title
+        return JOptionPane.YES_NO_OPTION==n?true:false;
+    }
+
+    private void playFile(String mrl) {
+        application().playFile(mrl);
+    }
+
+    private void finishVedeo() {
+        videoContentPane.showDefault();
+        application().post(StoppedEvent.INSTANCE);
+        application().playNext();
+    }
+
     private ButtonGroup addActions(List<Action> actions, JMenu menu, boolean selectFirst) {
         ButtonGroup buttonGroup = addActions(actions, menu);
         if (selectFirst) {
@@ -641,7 +694,10 @@ public final class MainFrame extends BaseFrame {
             prefs.putInt    ("frameHeight"     , getHeight());
             prefs.putBoolean("alwaysOnTop"     , isAlwaysOnTop());
             prefs.putBoolean("statusBar"       , statusBar.isVisible());
-            prefs.put       ("chooserDirectory", fileChooser.getCurrentDirectory().toString());
+            if(fileChooser.getSelectedFile()!=null){
+                prefs.put       ("chooserDirectory", fileChooser.getSelectedFile().toString());
+            }
+
 
             String recentMedia;
             List<String> mrls = application().recentMedia();

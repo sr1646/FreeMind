@@ -21,7 +21,7 @@ public class Output {
     }
 
     public static void debug(String message) {
-//        doPrint(message);
+        doPrint(message);
     }
     public static void decorate(String decorator, int repeatTill) {
         StringBuilder decoration=new StringBuilder(repeatTill+2);

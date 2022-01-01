@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class MapHelper {
+public class CollectionHelper {
     /*
     Solution: The idea is to store the entry set in a list and sort the list on the basis of values. Then fetch values and keys from the list and put them in a new hashmap. Thus, a new hashmap is sorted according to values.
 Below is the implementation of the above idea:
@@ -30,5 +30,16 @@ Below is the implementation of the above idea:
             sortedMap.put(entry.getKey(), entry.getValue());
         }
         return sortedMap;
+    }
+    public  static boolean  isEmpty(List list){
+        if(list==null){
+            return true;
+        }else if(list.isEmpty()){
+            return true;
+        }
+        return false;
+    }
+    public  static boolean  isNotEmpty(List list){
+        return (!isEmpty(list));
     }
 }

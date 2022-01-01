@@ -1,10 +1,30 @@
 package sr.utility;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static sr.utility.Output.*;
@@ -16,7 +36,9 @@ public class FileHelper {
     private List<String> skipDirectory=new ArrayList<>(Arrays.asList("Google Photos","Takeout"));
     private List<String> skipDirectoryStartWith=new ArrayList<>(Arrays.asList("takeout","Photos from"));
     private Map<String,Integer> folder;
-
+    public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
+            "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
+    }));
 
 
     /*
@@ -211,7 +233,7 @@ public class FileHelper {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        folder=MapHelper.sortByKey(folder);
+        folder= CollectionHelper.sortByKey(folder);
 
         for(Map.Entry<String,Integer> entry:folder.entrySet()){
             System.out.println(entry.getKey()+" ( "+entry.getValue()+" )");
@@ -239,10 +261,9 @@ public class FileHelper {
         dvdHelper.visitSkippedFile(dvdList);
         int part=1;
         decorate("*",30);
-        boolean isMergeFromDVD=false;// that means we are deviding data for dvd
         for(DVDHelper DVD :dvdList){
             printLine(" "+part+" - "+DVD);
-            moveFilesWithSameFolderStructureOnDestination(destinationFolderStr+"//"+part++, DVD.getFilesToMove(),sourceFolderStr,isMergeFromDVD);
+            moveFilesWithSameFolderStructureOnDestination(sourceFolderStr,destinationFolderStr+"//"+part++, DVD.getFilesToMove());
         }
         decorate("*",30);
         printLine("\n");
@@ -287,6 +308,9 @@ public class FileHelper {
                 e.printStackTrace();
             }
         }
+    }
+    public void moveFilesWithSameFolderStructureOnDestination(String sourceFolderStr,String destinationFolderStr, List<File> filesToMove) {
+        moveFilesWithSameFolderStructureOnDestination(destinationFolderStr,filesToMove ,sourceFolderStr,false);
     }
     private void moveFilesWithSameFolderStructureOnDestination(String destinationFolderStr, List<File> filesToMove, String sourceFolderStr,boolean isMergeFromDVD) {
         if(filesToMove==null ||filesToMove.isEmpty()){
@@ -431,31 +455,56 @@ public class FileHelper {
             fileType.add(fileExtension);
         }
     }
-    public void moveAllTypes(String sourceFolderStr, String destinationFolderStr, String fileType) {
+    public void moveAllTypes(String sourceFolderStr, String destinationFolderStr, Set<String> fileType) {
         printLine("getting all types");
+        List<File> filesToMove = getSpecificTypeFiles(sourceFolderStr, fileType);
+        moveFilesWithSameFolderStructureOnDestination(sourceFolderStr,destinationFolderStr,filesToMove);
+    }
+
+    public static List<File> getSpecificTypeFiles(String sourceFolderStr, Set<String> fileType) {
+        Path sourceFolder = Paths.get(sourceFolderStr);
+        List<File> filesToMove = getSpecificTypeFiles(sourceFolder, fileType);
+        return filesToMove;
+    }
+
+    public static List<File> getSpecificTypeFiles(Path sourceFolder, Set<String> fileType) {
         startProgress();
         List<File> filesToMove=new ArrayList<>();
         try {
-            Path sourceFolder = Paths.get(sourceFolderStr);
-            Files.walk(sourceFolder).forEach(path -> addFileTypetoMove(path.toFile(),filesToMove,fileType));
+            Files.walk(sourceFolder).forEach(path -> addFileTypeToMove(path.toFile(),filesToMove, fileType));
         } catch (IOException e) {
             e.printStackTrace();
         }
         stopProgress();
-        moveFilesWithSameFolderStructureOnDestination(destinationFolderStr,filesToMove ,sourceFolderStr,false);
+        if(CollectionHelper.isEmpty(filesToMove)){
+            printLine("No Matching file found");
+        }
+        return filesToMove;
     }
-    private static void addFileTypetoMove(File file, List<File> fileToMove, String fileType) {
+
+    private static void addFileTypeToMove(File file, List<File> fileToMove, Set<String> fileType) {
         if (file.isFile()) {
             String fileName=file.getAbsolutePath().trim().toLowerCase();
-            String fileExtension=fileName.substring(fileName.lastIndexOf("."));
+            int beginIndex = fileName.lastIndexOf(".");
+            if(beginIndex<0){
+                debug(". not found when looking for extension");
+             return;
+            }
+            beginIndex++;
+            if(beginIndex>=fileName.length()){
+                debug(".(dot) found at end of the file there is no extention after .(dot)");
+                return;
+            }
+
+            String fileExtension=fileName.substring(beginIndex);
             if(fileExtension.isEmpty()){
                 printLine("File without extension: "+fileName);
                 return;
             }
-            fileType=fileType.trim().toLowerCase();
-            if(fileExtension.equalsIgnoreCase(fileType)){
-                fileToMove.add(file);
-            }
+
+                if(fileType.contains(fileExtension)){
+                    fileToMove.add(file);
+                }
         }
     }
 

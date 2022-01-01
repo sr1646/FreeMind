@@ -10,7 +10,8 @@ public enum Task {
     GENERATE_SERIESE("generate seriese"),
     SHOW_SIZE_OF_FOLDERS("to view size of folders"),
     SHOW_ALL_TYPE_OF_FILE_FROM_FOLDER("Display all different file type from folder"),
-    SEPARATE_VIDEO_AND_PHOTO("It will store vedeo in vedeo folder you have to provide all vedeo format for that i.e. .MP4")
+    SEPARATE_VIDEO_AND_PHOTO("It will store vedeo in vedeo folder you have to provide all vedeo format for that i.e. .MP4"),
+    LIST_SPECIFIC_TYPE_FILES("It will file with all matching extension i.e. .MP4")
     ;
 
 

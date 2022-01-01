@@ -20,6 +20,8 @@
 package uk.co.caprica.vlcjplayer;
 
 import com.sun.jna.NativeLibrary;
+import sr.utility.FileHelper;
+import sr.utility.StringUtil;
 import uk.co.caprica.nativestreams.NativeStreams;
 import uk.co.caprica.vlcj.binding.LibC;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
@@ -49,6 +51,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,13 +118,10 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
         setLookAndFeel();
 
-//        SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-                app = new VlcjPlayer();
-                app.start();
-//            }
-//        });
+        app = new VlcjPlayer();
+        app.start();
+
+
     }
 
     private static String val(String val) {
@@ -150,7 +150,7 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
         prepareDiscoverers();
 
-        mainFrame = new MainFrame();
+        mainFrame = MainFrame.mainFrame();
         mainFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -196,6 +196,7 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
         for (RendererDiscoverer discoverer : rendererDiscoverers) {
             discoverer.start();
         }
+        Application.application().playNext();
     }
 
     private void prepareDiscoverers() {
