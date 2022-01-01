@@ -166,8 +166,8 @@ final class ControlsPane extends BasePanel {
         previousButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                application().setFileTrackerToPreviousVideo();
-                application().playNext();
+                application().PlayPrevVideo();
+
             }
         });
         addFolder.addActionListener(new ActionListener() {

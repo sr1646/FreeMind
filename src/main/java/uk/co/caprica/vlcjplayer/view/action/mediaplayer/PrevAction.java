@@ -24,16 +24,14 @@ import uk.co.caprica.vlcjplayer.view.action.Resource;
 
 import java.awt.event.ActionEvent;
 
-import static uk.co.caprica.vlcjplayer.Application.application;
+final class PrevAction extends MediaPlayerAction {
 
-final class NextAction extends MediaPlayerAction {
-
-    NextAction(Resource resource) {
+    PrevAction(Resource resource) {
         super(resource);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Application.application().playNext();
+        Application.application().PlayPrevVideo();
     }
 }

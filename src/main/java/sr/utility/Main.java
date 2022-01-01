@@ -20,7 +20,7 @@ public class Main {
     public void driver(){
         showMenu();
 //        Task task = getTaskFromStandardInput();
-        Task task=Task.LIST_SPECIFIC_TYPE_FILES ;
+        Task task=Task.MOVE_ALL_FILES_TO_FOLDER ;
 //        print("Selected Task: "+task);
 
         switch (task){
@@ -34,8 +34,8 @@ public class Main {
                 addValueInSet();
                 break;
             case MOVE_ALL_FILES_TO_FOLDER:
-//                FileHelper.moveFiles("E:\\AS\\experiment\\source","E:\\AS\\experiment\\destination");
-                moveFiles();
+                new FileHelper().moveFiles("E:\\test","E:\\birthday");
+//                moveFiles();
                 break;
             case DEVIDE_DATA_FOR_DVD:
                 devideDvdCompatible();

@@ -29,7 +29,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,10 +75,14 @@ import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 public final class MainFrame extends BaseFrame {
 
     private static final String ACTION_EXIT_FULLSCREEN = "exit-fullscreen";
+    private static final String ACTION_PLAY_NEXT_VIDEO = "play-next-video";
+    private static final String ACTION_PLAY_PREV_VIDEO = "play-prev-video";
 
     private static final KeyStroke KEYSTROKE_ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
 
-    private static final KeyStroke KEYSTROKE_TOGGLE_FULLSCREEN = KeyStroke.getKeyStroke("F11");
+    private static final KeyStroke KEYSTROKE_TOGGLE_FULLSCREEN = KeyStroke.getKeyStroke("F");
+    private static final KeyStroke KEYSTROKE_NEXT = KeyStroke.getKeyStroke("N");
+    private static final KeyStroke KEYSTROKE_PREV = KeyStroke.getKeyStroke("P");
 
     private final Action mediaOpenAction;
     private final Action mediaQuitAction;
@@ -484,19 +487,17 @@ public final class MainFrame extends BaseFrame {
                     @Override
                     public void run() {
 //                        mouseMovementDetector.stop();
-                        videoContentPane.showDefault();
-                        application().post(StoppedEvent.INSTANCE);
+                        stopVedeo();
                     }
                 });
             }
             @Override
             public void forward(MediaPlayer mediaPlayer) {
-                finishVedeo();
+
             }
             @Override
             public void backward(MediaPlayer mediaPlayer) {
-                Application.application().setFileTrackerToPreviousVideo();
-                finishVedeo();
+
             }
             @Override
             public void finished(MediaPlayer mediaPlayer) {
@@ -504,7 +505,6 @@ public final class MainFrame extends BaseFrame {
                     @Override
                     public void run() {
                         finishVedeo();
-
                     }
                 });
             }
@@ -568,6 +568,18 @@ public final class MainFrame extends BaseFrame {
                 videoFullscreenAction.select(false);
             }
         });
+        getActionMap().put(ACTION_PLAY_NEXT_VIDEO, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                application().playNext();
+            }
+        });
+        getActionMap().put(ACTION_PLAY_PREV_VIDEO, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                application().PlayPrevVideo();
+            }
+        });
 
         applyPreferences();
 
@@ -577,6 +589,11 @@ public final class MainFrame extends BaseFrame {
 
 //        setLogoAndMarquee(application().mediaPlayerComponent().mediaPlayer());
 //        setLogoAndMarquee(application().callbackMediaPlayerComponent().mediaPlayer());
+    }
+
+    public void stopVedeo() {
+        videoContentPane.showDefault();
+        application().post(StoppedEvent.INSTANCE);
     }
 
     public File getSelectedFolder() {
@@ -632,8 +649,7 @@ public final class MainFrame extends BaseFrame {
     }
 
     private void finishVedeo() {
-        videoContentPane.showDefault();
-        application().post(StoppedEvent.INSTANCE);
+        stopVedeo();
         application().playNext();
     }
 
@@ -778,11 +794,15 @@ public final class MainFrame extends BaseFrame {
 
     private void registerEscapeBinding() {
         getInputMap().put(KEYSTROKE_ESCAPE, ACTION_EXIT_FULLSCREEN);
+        getInputMap().put(KEYSTROKE_NEXT, ACTION_PLAY_NEXT_VIDEO);
+        getInputMap().put(KEYSTROKE_PREV, ACTION_PLAY_PREV_VIDEO);
         getInputMap().put(KEYSTROKE_TOGGLE_FULLSCREEN, ACTION_EXIT_FULLSCREEN);
     }
 
     private void deregisterEscapeBinding() {
         getInputMap().remove(KEYSTROKE_ESCAPE);
+        getInputMap().remove(KEYSTROKE_NEXT);
+        getInputMap().remove(KEYSTROKE_PREV);
         getInputMap().remove(KEYSTROKE_TOGGLE_FULLSCREEN);
     }
 

@@ -192,11 +192,9 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
     private void start() {
         mainFrame.setVisible(true);
-
         for (RendererDiscoverer discoverer : rendererDiscoverers) {
             discoverer.start();
         }
-        Application.application().playNext();
     }
 
     private void prepareDiscoverers() {

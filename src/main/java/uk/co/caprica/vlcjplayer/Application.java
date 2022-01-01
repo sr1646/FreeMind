@@ -80,13 +80,13 @@ public final class Application {
     private Map<String,List<File>> favFolder =new HashMap<String,List<File>>();
     private List<JButton> favFolderButtonList;
     private Icon favButtonIcon;
-    public void setFileTrackerToPreviousVideo() {
+    public void PlayPrevVideo() {
         if(fileTracker>1){
             this.fileTracker-=2;
         }else{
             fileTracker=0;
         }
-
+        application().playNext();
     }
 
 
@@ -127,6 +127,9 @@ public final class Application {
                     .map(e -> e.getKey() + "\n++++++++++++++++\n " + e.getValue().toString().replaceAll(", ","\n")+"\n")
                     .collect(Collectors.joining("\n------------------------------------------------------\n"));
             if(MainFrame.mainFrame().moveConfirmation(fileDetail)){
+                MainFrame.mainFrame().stopVedeo();
+                Application.application().playFile("doNotDeleteSensitiveForApp.mp4");
+                MainFrame.mainFrame().stopVedeo();
                 this.destinationFolder = selectedFolder.getAbsolutePath();
                 StringBuilder favoriteDestination;
                 FileHelper fh=new FileHelper();
@@ -134,6 +137,7 @@ public final class Application {
                     favoriteDestination=new StringBuilder(destinationFolder).append(File.separator).append(favFolderEntry.getKey());
                     fh.moveFilesWithSameFolderStructureOnDestination(this.sourceFolder,favoriteDestination.toString(),favFolderEntry.getValue());
                 }
+                application().initFileList(new File(sourceFolder));
             }
         }else{
             AlertBox.warningBox("Not moving any file as destination folder not selected","No Action Taken");
@@ -253,7 +257,7 @@ public final class Application {
                 playFile(fileList.get(fileTracker++));
 
             }else {
-               AlertBox.infoBox("Last Vedeo reached, Starting again from begining","Last Vedeo");
+               AlertBox.infoBox("Last Video reached, Starting again from beginning","Last Video");
                fileTracker=0;
             }
         }else {

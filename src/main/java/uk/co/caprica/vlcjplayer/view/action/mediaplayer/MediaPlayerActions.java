@@ -97,6 +97,8 @@ public final class MediaPlayerActions {
         List<Action> actions = new ArrayList<>();
         actions.add(new PlayAction(resource("menu.playback.item.play")));
         actions.add(new StopAction(resource("menu.playback.item.stop")));
+        actions.add(new NextAction(resource("menu.playback.item.next")));
+        actions.add(new PrevAction(resource("menu.playback.item.prev")));
         return ImmutableList.copyOf(actions);
     }
 
