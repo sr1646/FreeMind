@@ -22,5 +22,6 @@ public class TempPopup {
         timer.start();
         dialog.setVisible(true);
         dialog.dispose();
+
     }
 }

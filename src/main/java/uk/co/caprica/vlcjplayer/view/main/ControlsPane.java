@@ -189,7 +189,7 @@ final class ControlsPane extends BasePanel {
         moveFavouriteFolder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                application().setDestinationFolder();
+                application().moveFilesToFolder();
             }
         });
         nextButton.addActionListener(new ActionListener() {

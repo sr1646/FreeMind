@@ -42,6 +42,7 @@ public class Output {
     public static void drawProgressBar(int workDone, int totalWork) {
         final int HUNDRED_PERCENT=100;
         int percentage= workDone *HUNDRED_PERCENT/ totalWork;
+
         print("[ ");
         decorateInSameLine("#",(percentage));
         decorateInSameLine(" ",(HUNDRED_PERCENT-percentage));

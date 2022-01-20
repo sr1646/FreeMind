@@ -1,5 +1,6 @@
 package sr.utility;
 
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,14 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static sr.utility.Output.*;
@@ -39,7 +33,6 @@ public class FileHelper {
     public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
             "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
     }));
-
 
     /*
     ################################################################################################################################
@@ -382,22 +375,45 @@ public class FileHelper {
         }
         return destinationFolder;
     }
-    public void showFileFolerWithSize(String sourceFolder){
-        File dir = new File(sourceFolder);
+    public void showFileFolerWithSize(File dir){
+        decorate("*",20);
+        printLine("On your Mark promethius going to : "+dir.getAbsolutePath());
+        decorate("*",20);
         File[] directoryListing = dir.listFiles();
         if (directoryListing == null) {
             return;
         }
 
         Map<String, Long> fileWithSize = new LinkedHashMap<String, Long>();
+        Map<String, File> folderList = new LinkedHashMap<String, File>();
         for (File child : directoryListing) {
             fileWithSize.put(child.getName(), size(child.toPath()));
+            if(child.isDirectory()){
+                folderList.put(child.getName(),child);
+            }
         }
         Map<String, Long> sortedMap = new MapSort().sortMapByValue(fileWithSize);
         int srNo = 1;
+        printLine("0 to go back");
+        String[] fileName=new String[sortedMap.size()];
         for (Object entry : sortedMap.entrySet()) {
             Map.Entry entryv = (Map.Entry<String, Long>) entry;
+            fileName[srNo-1]= String.valueOf(entryv.getKey());
             printLine((srNo++) + "\t" + entryv.getKey() + "\t" + getSizeInGB((Long) entryv.getValue()));
+
+        }
+        decorate("-",20);
+        printLine("Pleaase choose folder to go");
+        Scanner stdIn=new Scanner(System.in);
+        int choice=stdIn.nextInt();
+        if(choice==0){
+            showFileFolerWithSize(dir.getParentFile());
+        }else{
+            if(choice<=sortedMap.size()){
+                showFileFolerWithSize(folderList.get(fileName[--choice]));
+            }else{
+                printLine("Invallid choice: exiting  prograam");
+            }
         }
     }
 
@@ -466,7 +482,6 @@ public class FileHelper {
         List<File> filesToMove = getSpecificTypeFiles(sourceFolder, fileType);
         return filesToMove;
     }
-
     public static List<File> getSpecificTypeFiles(Path sourceFolder, Set<String> fileType) {
         startProgress();
         List<File> filesToMove=new ArrayList<>();
@@ -481,6 +496,7 @@ public class FileHelper {
         }
         return filesToMove;
     }
+
 
     private static void addFileTypeToMove(File file, List<File> fileToMove, Set<String> fileType) {
         if (file.isFile()) {
@@ -508,15 +524,34 @@ public class FileHelper {
         }
     }
 
-    /*
-    ################################################################################################################################
-    ################################################################################################################################
-    ################################################################################################################################
-    ################################################################################################################################
-    Only Public method End
-    ################################################################################################################################
-    ################################################################################################################################
-    ################################################################################################################################
-    ################################################################################################################################
-    */
+    public static void setAllFilesNameAndRepeatedFile(String sourceFolderStr, Set<String> allUniqueFileName, Map<String, Integer> repeatedFile) {
+        Path sourceFolder = Paths.get(sourceFolderStr);
+        startProgress();
+        try {
+            Files.walk(sourceFolder).forEach(path -> addFileNameToSet(path.toFile(),allUniqueFileName,repeatedFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        stopProgress();
+        if(CollectionHelper.isEmpty(allUniqueFileName)){
+            printLine("No Matching file found");
+        }
+        return;
+    }
+    private static void addFileNameToSet(File file, Set<String> allUniqueFileName, Map<String, Integer> repeatedFile) {
+        if (file.isFile()) {
+            String fileName=file.getName().trim().toLowerCase();
+            if(allUniqueFileName.contains(fileName)){
+                Integer numberOfTimeFileRepeated=repeatedFile.get(fileName);
+                if(numberOfTimeFileRepeated==null){
+                    repeatedFile.put(fileName,2);
+                }else{
+                    repeatedFile.put(fileName,++numberOfTimeFileRepeated);
+                }
+            }else{
+                allUniqueFileName.add(fileName);
+            }
+
+        }
+    }
 }

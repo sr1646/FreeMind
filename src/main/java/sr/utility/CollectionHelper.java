@@ -1,9 +1,6 @@
 package sr.utility;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class CollectionHelper {
@@ -41,5 +38,28 @@ Below is the implementation of the above idea:
     }
     public  static boolean  isNotEmpty(List list){
         return (!isEmpty(list));
+    }
+
+    public  static boolean  isEmpty(Set set){
+        if(set==null){
+            return true;
+        }else if(set.isEmpty()){
+            return true;
+        }
+        return false;
+    }
+    public  static boolean  isNotEmpty(Set set){
+        return (!isEmpty(set));
+    }
+    public  static boolean  isEmpty(Map map){
+        if(map==null){
+            return true;
+        }else if(map.isEmpty()){
+            return true;
+        }
+        return false;
+    }
+    public  static boolean  isNotEmpty(Map map){
+        return (!isEmpty(map));
     }
 }

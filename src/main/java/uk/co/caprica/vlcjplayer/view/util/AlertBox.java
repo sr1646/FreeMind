@@ -22,7 +22,7 @@ public class AlertBox {
                 JOptionPane.INFORMATION_MESSAGE);
         final JDialog dialog = pane.createDialog(null, Title);
 
-        Timer timer = new Timer(2000, new ActionListener() {
+        Timer timer = new Timer(1500, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);
                 dialog.dispose();
@@ -32,5 +32,8 @@ public class AlertBox {
         timer.start();
         dialog.setVisible(true);
         dialog.dispose();
+    }
+    public static void destryableMessage(String message,String Title){
+
     }
 }

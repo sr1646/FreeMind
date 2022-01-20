@@ -115,7 +115,7 @@ public final class Application {
         this.sourceFolder = sourceFolder;
     }
 
-    public void setDestinationFolder() {
+    public void moveFilesToFolder() {
         if(StringUtil.isEmpty(sourceFolder) || CollectionHelper.isEmpty(favFileList)){
             AlertBox.warningBox("Please Select few video as Favourite First","No video found");
             return;
@@ -130,13 +130,18 @@ public final class Application {
                 MainFrame.mainFrame().stopVedeo();
                 Application.application().playFile("doNotDeleteSensitiveForApp.mp4");
                 MainFrame.mainFrame().stopVedeo();
+                application().resetFileList();
+
                 this.destinationFolder = selectedFolder.getAbsolutePath();
                 StringBuilder favoriteDestination;
+                AlertBox.infoBox("Moving files in progress, We will show you success message when process complete.\n Please Click on OK","progress Infor");
                 FileHelper fh=new FileHelper();
                 for(Map.Entry<String,List<File>> favFolderEntry:favFolder.entrySet()) {
                     favoriteDestination=new StringBuilder(destinationFolder).append(File.separator).append(favFolderEntry.getKey());
                     fh.moveFilesWithSameFolderStructureOnDestination(this.sourceFolder,favoriteDestination.toString(),favFolderEntry.getValue());
                 }
+
+                AlertBox.infoBox("Successfully Moved all files","Success");
                 application().initFileList(new File(sourceFolder));
             }
         }else{
@@ -246,11 +251,16 @@ public final class Application {
             totalFiles=fileList.size();
             fileTracker=0;
         }else{
-            isFileListAvailable=false;
-            totalFiles=0;
-            fileTracker=0;
+            resetFileList();
         }
     }
+
+    private void resetFileList() {
+        isFileListAvailable=false;
+        totalFiles=0;
+        fileTracker=0;
+    }
+
     public void playNext(){
         if(isFileListAvailable){
             if(fileTracker<totalFiles){
@@ -267,7 +277,12 @@ public final class Application {
     }
 
     public void playFile(String absoluteFilePath) {
-        MainFrame.mainFrame().setTitle("Playing: "+absoluteFilePath);
+        if(isFileListAvailable){
+            MainFrame.mainFrame().setTitle("Playing: "+fileTracker+" / "+totalFiles+" : "+absoluteFilePath);
+        }else{
+            MainFrame.mainFrame().setTitle("Playing: "+absoluteFilePath);
+        }
+
         currentlyPlayingFile=new File(absoluteFilePath);
         mediaPlayer().media().play(absoluteFilePath);
         setFavourite();

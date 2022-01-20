@@ -11,7 +11,8 @@ public enum Task {
     SHOW_SIZE_OF_FOLDERS("to view size of folders"),
     SHOW_ALL_TYPE_OF_FILE_FROM_FOLDER("Display all different file type from folder"),
     SEPARATE_VIDEO_AND_PHOTO("It will store vedeo in vedeo folder you have to provide all vedeo format for that i.e. .MP4"),
-    LIST_SPECIFIC_TYPE_FILES("It will file with all matching extension i.e. .MP4")
+    LIST_SPECIFIC_TYPE_FILES("It will file with all matching extension i.e. .MP4"),
+    COMPARE_FILE_BY_NAME_AND_EXTENSION("It will compare file by name even directory structure is different it will just compare the file names, Just fYi if same name file are there in multiple folder it will still consider them as same file but you will get list of file count from both folder to identify this error")
     ;
 
 

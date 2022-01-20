@@ -6,7 +6,9 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import static sr.utility.Output.print;
 import static sr.utility.Output.printLine;
 
 public class Main {
@@ -20,7 +22,7 @@ public class Main {
     public void driver(){
         showMenu();
 //        Task task = getTaskFromStandardInput();
-        Task task=Task.MOVE_ALL_FILES_TO_FOLDER ;
+        Task task=Task.SHOW_SIZE_OF_FOLDERS ;
 //        print("Selected Task: "+task);
 
         switch (task){
@@ -47,7 +49,7 @@ public class Main {
                 System.out.println(new Series().getSeriese());
                 break;
             case SHOW_SIZE_OF_FOLDERS:
-                showFolderSize("C:\\as\\experiment\\test");
+                showFolderSize("F:\\porn\\web\\test");
                 break;
             case SHOW_ALL_TYPE_OF_FILE_FROM_FOLDER:
                 showTypesFromFolder("C:\\as\\experiment\\test");
@@ -58,8 +60,64 @@ public class Main {
             case LIST_SPECIFIC_TYPE_FILES:
                 showFilesMatchingWithType("C:\\as\\experiment\\vedeo",FileHelper.VEDEO_FILES_EXTENSION);
                 break;
+            case COMPARE_FILE_BY_NAME_AND_EXTENSION:
+//                compareFolder("C:\\as\\experiment\\original","C:\\as\\experiment\\test");
+                compareFolder("C:\\as\\secure","E:\\AS\\CLASSIFIED\\MOBILE CAMERA\\already_taken_backup\\google_photos\\dvd_gphoto");
+                break;
             default :
                 throw new IllegalStateException("Unexpected value: " + task);
+        }
+    }
+
+    private void compareFolder(String source, String destination) {
+        Set<String> sourceFileName=new HashSet<>();
+        Map<String,Integer> sourceRepeatedFile=new HashMap<>();
+        FileHelper.setAllFilesNameAndRepeatedFile(source,sourceFileName,sourceRepeatedFile);
+
+        Set<String> destinationFileName=new HashSet<>();
+        Map<String,Integer> destinationRepeatedFile=new HashMap<>();
+        FileHelper.setAllFilesNameAndRepeatedFile(destination,destinationFileName,destinationRepeatedFile);
+        compareTwoFolderFileName(sourceFileName, destinationFileName);
+        if(sourceRepeatedFile.equals(destinationRepeatedFile)){
+              printLine("Both folder have same repeated File");
+        }else{
+            printRepeatedFile(source,sourceRepeatedFile);
+            printRepeatedFile(destination,destinationRepeatedFile);
+        }
+
+
+    }
+
+    private void compareTwoFolderFileName(Set<String> firstSet, Set<String> secondSet) {
+        Set one = new HashSet<>(firstSet);
+        Set two = new HashSet<>(secondSet);
+        one.removeAll(secondSet);
+        two.removeAll(firstSet);
+        boolean bothFolderHaveSameFile=true;
+        if(CollectionHelper.isNotEmpty(one)){
+            bothFolderHaveSameFile=false;
+            System.out.println("These are the extra file in Source Folder: [Total File: "+one.size()+" ]: "+one);
+        }
+        if(CollectionHelper.isNotEmpty(two)){
+            bothFolderHaveSameFile=false;
+            System.out.println("These are the extra file in destination Folder: [Total File: "+two.size()+" ]: "+two);
+        }
+        if(bothFolderHaveSameFile){
+            System.out.println("Both folder have same file name");
+        }
+    }
+
+    private void printRepeatedFile(String source, Map<String, Integer> repeatedFile) {
+        if(CollectionHelper.isNotEmpty(repeatedFile)){
+            printLine("\n\n"+source+" folder repeated file list: [Total File Repeated: "+repeatedFile.size()+" ]");
+            int totalRepeatedFile = repeatedFile.values().stream().mapToInt(Integer::intValue).sum();
+            printLine("Sum of all repeatedFile: "+totalRepeatedFile);
+            String fileDetail=repeatedFile.entrySet().stream()
+                    .map(e -> e.getKey() + " Repeated " + e.getValue()+" Times, ")
+                    .collect(Collectors.joining(""));
+            print(fileDetail);
+        }else{
+            printLine("\n\n"+source+" folder non of the file name repeated");
         }
     }
 
@@ -91,7 +149,8 @@ public class Main {
     }
 
     private void showFolderSize(String sourceFolde) {
-        new FileHelper().showFileFolerWithSize(sourceFolde);
+        File dir = new File(sourceFolde);
+        new FileHelper().showFileFolerWithSize(dir);
     }
 
     private void devideDvdCompatible() {
