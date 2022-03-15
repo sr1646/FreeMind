@@ -66,6 +66,7 @@ import uk.co.caprica.vlcjplayer.view.BaseFrame;
 import uk.co.caprica.vlcjplayer.view.action.StandardAction;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.RendererAction;
+import uk.co.caprica.vlcjplayer.view.debug.DebugFrame;
 import uk.co.caprica.vlcjplayer.view.snapshot.SnapshotView;
 
 import com.google.common.eventbus.Subscribe;
@@ -75,14 +76,8 @@ import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 public final class MainFrame extends BaseFrame {
 
     private static final String ACTION_EXIT_FULLSCREEN = "exit-fullscreen";
-    private static final String ACTION_PLAY_NEXT_VIDEO = "play-next-video";
-    private static final String ACTION_PLAY_PREV_VIDEO = "play-prev-video";
-
     private static final KeyStroke KEYSTROKE_ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
-
     private static final KeyStroke KEYSTROKE_TOGGLE_FULLSCREEN = KeyStroke.getKeyStroke("F");
-    private static final KeyStroke KEYSTROKE_NEXT = KeyStroke.getKeyStroke("N");
-    private static final KeyStroke KEYSTROKE_PREV = KeyStroke.getKeyStroke("P");
 
     private final Action mediaOpenAction;
     private final Action mediaQuitAction;
@@ -164,11 +159,7 @@ public final class MainFrame extends BaseFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFolder = getSelectedFolder();
-                if(selectedFolder!=null){
-                    application().initFileList(selectedFolder);
-                    application().playNext();
-                    application().setSourceFolder(selectedFolder.getAbsolutePath());
-                }
+                playFolderFiles(selectedFolder);
 
             }
         };
@@ -233,7 +224,7 @@ public final class MainFrame extends BaseFrame {
         toolsMessagesAction = new StandardAction(resource("menu.tools.item.messages")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                application().post(ShowMessagesEvent.INSTANCE);
+                AlertBox.infoBox(application().getCurrentlyPlayingFile().toString(),"File Name");
             }
         };
 
@@ -568,18 +559,6 @@ public final class MainFrame extends BaseFrame {
                 videoFullscreenAction.select(false);
             }
         });
-        getActionMap().put(ACTION_PLAY_NEXT_VIDEO, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                application().playNext();
-            }
-        });
-        getActionMap().put(ACTION_PLAY_PREV_VIDEO, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                application().PlayPrevVideo();
-            }
-        });
 
         applyPreferences();
 
@@ -589,6 +568,14 @@ public final class MainFrame extends BaseFrame {
 
 //        setLogoAndMarquee(application().mediaPlayerComponent().mediaPlayer());
 //        setLogoAndMarquee(application().callbackMediaPlayerComponent().mediaPlayer());
+    }
+
+    public void playFolderFiles(File selectedFolder) {
+        if(selectedFolder !=null){
+            application().initFileList(selectedFolder);
+            application().playNext();
+            application().setSourceFolder(selectedFolder.getAbsolutePath());
+        }
     }
 
     public void stopVedeo() {
@@ -794,15 +781,11 @@ public final class MainFrame extends BaseFrame {
 
     private void registerEscapeBinding() {
         getInputMap().put(KEYSTROKE_ESCAPE, ACTION_EXIT_FULLSCREEN);
-        getInputMap().put(KEYSTROKE_NEXT, ACTION_PLAY_NEXT_VIDEO);
-        getInputMap().put(KEYSTROKE_PREV, ACTION_PLAY_PREV_VIDEO);
         getInputMap().put(KEYSTROKE_TOGGLE_FULLSCREEN, ACTION_EXIT_FULLSCREEN);
     }
 
     private void deregisterEscapeBinding() {
         getInputMap().remove(KEYSTROKE_ESCAPE);
-        getInputMap().remove(KEYSTROKE_NEXT);
-        getInputMap().remove(KEYSTROKE_PREV);
         getInputMap().remove(KEYSTROKE_TOGGLE_FULLSCREEN);
     }
 

@@ -7,7 +7,9 @@ import java.awt.event.ActionListener;
 public class AlertBox {
     public static void infoBox(String infoMessage, String titleBar)
     {
-        JOptionPane.showMessageDialog(null, infoMessage, "InfoBox: " + titleBar, JOptionPane.INFORMATION_MESSAGE);
+        JTextArea textarea= new JTextArea(infoMessage);
+        textarea.setEditable(true);
+        JOptionPane.showMessageDialog(null, textarea, "InfoBox: " + titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
     public static void errorBox(String infoMessage, String titleBar)
     {
