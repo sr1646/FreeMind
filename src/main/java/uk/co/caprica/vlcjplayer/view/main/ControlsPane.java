@@ -173,7 +173,10 @@ final class ControlsPane extends BasePanel {
         addFolder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String folder = JOptionPane.showInputDialog("Enter new folder name:");
+                String folder;
+                do{
+                 folder =JOptionPane.showInputDialog("Enter new folder name:");
+                }while(folder.isEmpty());
                 if(Application.application().isFolderExist(folder)){
                     AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
                     return;

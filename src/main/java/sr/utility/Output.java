@@ -23,6 +23,9 @@ public class Output {
     public static void debug(String message) {
 //        doPrint(message);
     }
+    public static void decorate(String decorator) {
+        decorate(decorator,20);
+    }
     public static void decorate(String decorator, int repeatTill) {
         StringBuilder decoration=new StringBuilder(repeatTill+2);
         decoration.append("\n");

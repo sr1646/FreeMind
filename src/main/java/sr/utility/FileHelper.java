@@ -441,7 +441,34 @@ public class FileHelper {
 
         return true;
     }
+    public void deleteDirectory(File file) {
+        if(file.isDirectory()){
+            String[] childFiles = file.list();
+            if(childFiles.length==0) {
+                //Directory is empty. Proceed for deletion
+                file.delete();
+            }
+            else {
+                decorate("-");
+                printLine(file.getAbsolutePath()+"\tDirectory is not empty so not deleting considering data loss chances");
+                decorate("*");
+                printLine("Files: "+Arrays.asList(childFiles));
+                decorate("-");
+//                //Directory has other files.
+//                //Need to delete them first
+//                for (String childFilePath :  childFiles) {
+//                    //recursive delete the files
+//                    deleteDirectory(childFilePath);
+//                }
+            }
 
+        }
+        else {
+            //it is a simple file. Proceed for deletion
+            file.delete();
+        }
+
+    }
     private void addFromDVDToFolder(File file, List<File> filesToMove) {
         if (file.isFile()) {
             filesToMove.add(file);
