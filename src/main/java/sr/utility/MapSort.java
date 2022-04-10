@@ -15,7 +15,7 @@ public class MapSort<K,V> {
                     try {
                         throw new Exception("Two object class not matching: "+o1.getClass()+" != "+o2.getClass());
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Output.exception(e);
                         debug(e.getMessage());
                     }
                     return 0;

@@ -1,10 +1,15 @@
 package sr.utility;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 public class Output {
     static Progress  progressThread;
     public static void printLine(Object message) {
         doPrint(message);
     }
+    private static final String exceptionFile="logOfException.txt";
+    private static FileHelper fileHelper=new FileHelper();
     public static void print(Object message) {
         if(message ==null){
             System.out.print("null");
@@ -21,7 +26,19 @@ public class Output {
     }
 
     public static void debug(String message) {
-//        doPrint(message);
+        doPrint(message);
+    }
+    public static String exceptionStacktraceToString(Exception e)
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        e.printStackTrace(ps);
+        ps.close();
+        return baos.toString();
+    }
+    public static void exception(Exception e) {
+        fileHelper.writeFile(e.getMessage(),exceptionFile);
+        fileHelper.writeFile(exceptionStacktraceToString(e),exceptionFile);
     }
     public static void decorate(String decorator) {
         decorate(decorator,20);

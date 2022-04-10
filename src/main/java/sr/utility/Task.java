@@ -1,6 +1,7 @@
 package sr.utility;
 
 public enum Task {
+    START_VLC("custom vlc for playing all vedeo from folder  and add them in different  folder and move these categorize vedeo whereever you wanted"),
     SHOW_ALL_FOLDER("for managing my google photos back up specifically, it will show all folder with count(how many time it is repeated) in my google photos backup"),
     GET_ALL_LINK_FROM_FILE("Extract all link from html document."),
     ADD_VALUE_IN_SET("Normal set implementation for removing duplicate values (currently it is taking input from file)"),

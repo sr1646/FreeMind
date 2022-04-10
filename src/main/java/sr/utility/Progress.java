@@ -18,7 +18,7 @@ public class Progress extends Thread{
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
     }
     @Override

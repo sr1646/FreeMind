@@ -19,6 +19,8 @@
 
 package uk.co.caprica.vlcjplayer.view.image;
 
+import sr.utility.Output;
+
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
@@ -112,7 +114,7 @@ public final class ImagePane extends JComponent {
                 sourceImage = ImageIO.read(imageUrl);
             }
             catch (IOException e) {
-                e.printStackTrace();
+                Output.exception(e);
             }
         }
     }

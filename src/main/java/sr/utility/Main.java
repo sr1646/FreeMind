@@ -1,6 +1,10 @@
 package sr.utility;
 
 import sr.basic.Series;
+import uk.co.caprica.vlcj.binding.RuntimeUtil;
+import uk.co.caprica.vlcj.support.Info;
+import uk.co.caprica.vlcjplayer.VlcjPlayer;
+import uk.co.caprica.vlcjplayer.view.main.MainFrame;
 
 import java.io.File;
 import java.util.*;
@@ -21,9 +25,9 @@ public class Main {
     }
     public void driver(){
         showMenu();
-//        Task task = getTaskFromStandardInput();
-        Task task=Task.SHOW_SIZE_OF_FOLDERS ;
-//        print("Selected Task: "+task);
+        Task task = getTaskFromStandardInput();
+//        Task task=Task.SHOW_SIZE_OF_FOLDERS ;
+        print("Selected Task: "+task);
 
         switch (task){
             case SHOW_ALL_FOLDER:
@@ -49,7 +53,7 @@ public class Main {
                 System.out.println(new Series().getSeriese());
                 break;
             case SHOW_SIZE_OF_FOLDERS:
-                showFolderSize("F:\\porn\\web\\test");
+                showFolderSize("F:\\test\\web\\test");
                 break;
             case SHOW_ALL_TYPE_OF_FILE_FROM_FOLDER:
                 showTypesFromFolder("C:\\as\\experiment\\test");
@@ -64,8 +68,19 @@ public class Main {
 //                compareFolder("C:\\as\\experiment\\original","C:\\as\\experiment\\test");
                 compareFolder("C:\\as\\secure","E:\\AS\\CLASSIFIED\\MOBILE CAMERA\\already_taken_backup\\google_photos\\dvd_gphoto");
                 break;
+            case START_VLC:
+                runVlc();
+                break;
             default :
                 throw new IllegalStateException("Unexpected value: " + task);
+        }
+    }
+
+    private void runVlc() {
+        try {
+            VlcjPlayer.startVlc();
+        } catch (InterruptedException e) {
+            Output.exception(e);
         }
     }
 

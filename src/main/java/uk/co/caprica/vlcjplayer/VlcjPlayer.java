@@ -97,7 +97,7 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
     private final NativeLog nativeLog;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void startVlc() throws InterruptedException {
         Info info = Info.getInstance();
 
         System.out.printf("vlcj             : %s%n", info.vlcjVersion() != null ? info.vlcjVersion() : "<version not available>");
@@ -120,7 +120,7 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
         app = new VlcjPlayer();
         app.start();
-        MainFrame.mainFrame().playFolderFiles(new File("F:\\porn\\move"));
+//        MainFrame.mainFrame().playFolderFiles(new File("F:\\porn\\move"));
 
     }
 
