@@ -1,5 +1,7 @@
 package sr.com.sr.va;
 
+import sr.utility.Output;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -14,7 +16,7 @@ public class OutputWriter {
             logFile=new File("Log_"+new SimpleDateFormat("yyyy-MM-dd-HH-mm'.txt'").format(new Date()));
             printWriter  =new PrintWriter(logFile);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
     }
     public static void printLogFileNameToConsole(){

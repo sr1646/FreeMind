@@ -19,6 +19,8 @@
 
 package uk.co.caprica.vlcjplayer.view.main;
 
+import sr.utility.Output;
+
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.net.URL;
@@ -88,7 +90,7 @@ abstract class MediaTransferHandler extends TransferHandler {
                 }
             }
             catch (Exception e) {
-                e.printStackTrace();
+                Output.exception(e);
             }
         }
         return false;

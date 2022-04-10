@@ -158,9 +158,8 @@ public class FileHelper {
     public  boolean writeFile(String line,String fileName){
 
         BufferedWriter writer = null;
-        close(writer);
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), encoding));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName,true), encoding));
             writer.write(line);
             writer.newLine();
         } catch (UnsupportedEncodingException e) {
@@ -187,11 +186,11 @@ public class FileHelper {
                 list.add(line);
             }
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Output.exception(e);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Output.exception(e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         } finally {
             close(reader);
         }
@@ -202,7 +201,7 @@ public class FileHelper {
         try {
             reader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
             reader=null;
         }
     }
@@ -211,7 +210,7 @@ public class FileHelper {
         try {
             writer.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
             writer=null;
         }
     }
@@ -224,7 +223,7 @@ public class FileHelper {
         try {
             Files.walk(dir).forEach(path -> showFile(path.toFile()));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
         folder= CollectionHelper.sortByKey(folder);
 
@@ -248,7 +247,7 @@ public class FileHelper {
                 Path sourceFolder = Paths.get(sourceFolderStr);
                 Files.walk(sourceFolder).forEach(path -> dvdHelper.addFileToDVD(path.toFile(),dvdList));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
 
         dvdHelper.visitSkippedFile(dvdList);
@@ -280,7 +279,7 @@ public class FileHelper {
         try {
             Files.walk(dir).forEach(path -> getMoveFileList(path.toFile(),filesToMove));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
         moveFiles(destinationPath, filesToMove);
         printLine("\n\n Total files moved: "+filesToMove.size());
@@ -298,7 +297,7 @@ public class FileHelper {
                 Files.setAttribute(targetPath, "creationTime", creationTime);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                Output.exception(e);
             }
         }
     }
@@ -363,7 +362,7 @@ public class FileHelper {
             Files.setAttribute(targetPath, "creationTime", creationTime);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
     }
 
@@ -433,7 +432,7 @@ public class FileHelper {
             try {
                 Files.walk(child.toPath()).forEach(path -> addFromDVDToFolder(path.toFile(),filesToMove));
             } catch (IOException e) {
-                e.printStackTrace();
+                Output.exception(e);
             }
         }
 
@@ -482,7 +481,7 @@ public class FileHelper {
             Path sourceFolder = Paths.get(sourceFolderStr);
             Files.walk(sourceFolder).forEach(path -> addFileType(path.toFile(),fileType));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
         stopProgress();
         return new ArrayList<>(fileType);
@@ -515,7 +514,7 @@ public class FileHelper {
         try {
             Files.walk(sourceFolder).forEach(path -> addFileTypeToMove(path.toFile(),filesToMove, fileType));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
         stopProgress();
         if(CollectionHelper.isEmpty(filesToMove)){
@@ -557,7 +556,7 @@ public class FileHelper {
         try {
             Files.walk(sourceFolder).forEach(path -> addFileNameToSet(path.toFile(),allUniqueFileName,repeatedFile));
         } catch (IOException e) {
-            e.printStackTrace();
+            Output.exception(e);
         }
         stopProgress();
         if(CollectionHelper.isEmpty(allUniqueFileName)){
