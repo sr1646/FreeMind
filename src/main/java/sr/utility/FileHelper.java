@@ -1,6 +1,9 @@
 package sr.utility;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,12 +27,23 @@ import java.util.concurrent.atomic.AtomicLong;
 import static sr.utility.Output.*;
 
 public class FileHelper {
+
     private int counter;
     private static final int GIGABYTE = 1024;
-    private final String encoding = "UTF-8";
+    private static final String encoding = "UTF-8";
     private List<String> skipDirectory=new ArrayList<>(Arrays.asList("Google Photos","Takeout"));
     private List<String> skipDirectoryStartWith=new ArrayList<>(Arrays.asList("takeout","Photos from"));
     private Map<String,Integer> folder;
+    public enum FileOpernation {
+        COPY,MOVE
+    }
+
+    public void setFileOpernation(FileOpernation fileOpernation) {
+        this.fileOpernation = fileOpernation;
+    }
+
+    private FileOpernation fileOpernation =FileOpernation.MOVE;
+    private boolean createSameFolderStructure=false;
     public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
             "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
     }));
@@ -46,11 +60,11 @@ public class FileHelper {
     ################################################################################################################################
 
      */
-    public long getSizeInMB(long size) {
+    public static long getSizeInMB(long size) {
         long mb = ((size) / GIGABYTE / GIGABYTE);
         return mb;
     }
-    private String getSizeInGB(long size) {
+    public static String getSizeInGB(long size) {
         long totalMB=getSizeInMB(size);
         long gb = (totalMB/GIGABYTE);
         int roundGb=Math.round(gb);
@@ -94,7 +108,7 @@ public class FileHelper {
      * Since the operation is non-atomic, the returned value may be inaccurate.
      * However, this method is quick and does its best.
      */
-    public long size(Path path) {
+    public static long getFileFolderSizeInByte(Path path) {
 
         final AtomicLong size = new AtomicLong(0);
 
@@ -155,7 +169,14 @@ public class FileHelper {
     ################################################################################################################################
 
      */
-    public  boolean writeFile(String line,String fileName){
+
+    /**
+     * This api will add (append) data to existing file
+     * @param line
+     * @param fileName
+     * @return
+     */
+    public static boolean writeFile(String line,String fileName){
 
         BufferedWriter writer = null;
         try {
@@ -176,7 +197,39 @@ public class FileHelper {
         }
         return true;
     }
-    public  List<String> readFile(String fileName){
+
+
+
+    /**
+     * This api will override existing data
+     * @param data
+     * @param fileName
+     * @return
+     */
+    public static boolean writeFile(List<String> data,String fileName){
+
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), encoding));
+            for(String line:data){
+                writer.write(line);
+                writer.newLine();
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return false;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            close(writer);
+        }
+        return true;
+    }
+    public static  List<String> readFile(String fileName){
         BufferedReader reader = null;
         ArrayList<String> list=new ArrayList<>();
         try {
@@ -197,7 +250,7 @@ public class FileHelper {
         return list;
     }
 
-    private  void close(BufferedReader reader) {
+    private  static void close(BufferedReader reader) {
         try {
             reader.close();
         } catch (IOException e) {
@@ -206,7 +259,7 @@ public class FileHelper {
         }
     }
 
-    private  void close(BufferedWriter writer) {
+    private static void close(BufferedWriter writer) {
         try {
             writer.close();
         } catch (IOException e) {
@@ -232,7 +285,8 @@ public class FileHelper {
         }
 
     }
-    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr) {
+    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr, boolean storeForLaterProcessing) {
+        setFileOpernation(FileHelper.FileOpernation.MOVE);
         if(StringUtil.isEmpty(sourceFolderStr) || StringUtil.isEmpty(destinationFolderStr)){
             printLine("The source and destination path must not be empty");
             return false;
@@ -251,12 +305,23 @@ public class FileHelper {
         }
 
         dvdHelper.visitSkippedFile(dvdList);
-        int part=1;
+        int part=0;
         decorate("*",30);
+        List<DVDHelper> dvdListStore=new ArrayList<>();
+        List <String> dvdDetail=new ArrayList<>();
         for(DVDHelper DVD :dvdList){
-            printLine(" "+part+" - "+DVD);
-            moveFilesWithSameFolderStructureOnDestination(sourceFolderStr,destinationFolderStr+"//"+part++, DVD.getFilesToMove());
+            if(storeForLaterProcessing){
+                dvdDetail.add(DVD.dvdInfo());
+                dvdListStore.add(DVD);
+            }else{
+                setDataForDVD(sourceFolderStr, destinationFolderStr, ++part, DVD);
+            }
         }
+        if(storeForLaterProcessing){
+            saveDVDDataToFile(sourceFolderStr, destinationFolderStr, dvdListStore,dvdDetail);
+        }
+
+
         decorate("*",30);
         printLine("\n");
         decorate("#",30);
@@ -265,6 +330,51 @@ public class FileHelper {
         return true;
     }
 
+    private static void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+        ObjectMapper mapper = new ObjectMapper();
+        String dvdDetailJson = null;
+        try {
+
+            dvdDetailJson = mapper.writeValueAsString(dvdListStore);
+
+            List<String> dvdFileInfo=new ArrayList<>();
+            dvdFileInfo.add(sourceFolderStr);
+            dvdFileInfo.add(destinationFolderStr);
+            dvdFileInfo.add(dvdDetailJson);
+
+            createFolderBasedOnStrPath(DVDHelper.STORED_DVD);
+
+            String dvdStoreFileName = getDVDStoreName();
+            dvdStoreFileName=DVDHelper.STORED_DVD+File.separator+dvdStoreFileName+"_"+DateUtil.getNowDateForFileName();
+            writeFile(dvdFileInfo,dvdStoreFileName);
+            writeFile(dvdDetail,dvdStoreFileName+DVDHelper.STORED_DVD_DETAIL_FILE);
+            updateProgress(DVDHelper.STORED_DVD_INITIAL_PROGRESS, dvdStoreFileName);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String getDVDStoreName() {
+        Scanner stdIn=new Scanner(System.in);
+        String dvdStoreFileName="";
+        do{
+            System.out.println("Please Enter File name for saving dvd details: ");
+            dvdStoreFileName=stdIn.nextLine();
+        }while(StringUtil.isEmpty(dvdStoreFileName));
+        stdIn.close();
+        return dvdStoreFileName;
+    }
+
+    public static void updateProgress(Integer currentProgress, String dvdStoreName) {
+        List<String> dvdFileProgressInfo=new ArrayList<>();
+        dvdFileProgressInfo.add(String.valueOf(currentProgress));//current progress
+        writeFile(dvdFileProgressInfo, dvdStoreName +DVDHelper.STORED_DVD_PROGRESS_FILE);
+    }
+
+    public void setDataForDVD(String sourceFolderStr, String destinationFolderStr, int part, DVDHelper DVD) {
+        printLine(" "+part+" - "+ DVD);
+        moveFilesWithSameFolderStructureOnDestination(sourceFolderStr, destinationFolderStr +"//"+ part, DVD.getFilesToMove());
+    }
 
 
     public  boolean moveFiles(String source,String destination){
@@ -293,7 +403,7 @@ public class FileHelper {
                 Path sourcePath=file.toPath();
                 Path targetPath= destinationPath.resolve(sourcePath.getFileName());
                 FileTime creationTime  = (FileTime) Files.readAttributes(sourcePath, "creationTime").get("creationTime");
-                Files.move(sourcePath,targetPath);
+                moveOrCopyFile(sourcePath, targetPath);
                 Files.setAttribute(targetPath, "creationTime", creationTime);
 
             } catch (IOException e) {
@@ -301,7 +411,18 @@ public class FileHelper {
             }
         }
     }
+
+    private void moveOrCopyFile(Path sourcePath, Path targetPath) throws IOException {
+        if(fileOpernation==FileOpernation.MOVE){
+            Files.move(sourcePath,targetPath);
+        }else if(fileOpernation==FileOpernation.COPY){
+            Files.copy(sourcePath,targetPath);
+        }
+
+    }
+
     public void moveFilesWithSameFolderStructureOnDestination(String sourceFolderStr,String destinationFolderStr, List<File> filesToMove) {
+        
         moveFilesWithSameFolderStructureOnDestination(destinationFolderStr,filesToMove ,sourceFolderStr,false);
     }
     private void moveFilesWithSameFolderStructureOnDestination(String destinationFolderStr, List<File> filesToMove, String sourceFolderStr,boolean isMergeFromDVD) {
@@ -351,14 +472,18 @@ public class FileHelper {
             if("".equals(relativeDestinationFolder)){
                 destinationFolder= createFolderBasedOnStrPath(destinationFolderStr);
             }else{
-                destinationFolder= createFolderBasedOnStrPath(destinationFolderStr +"//"+ relativeDestinationFolder);
+                if(createSameFolderStructure){
+                    destinationFolder= createFolderBasedOnStrPath(destinationFolderStr +"//"+ relativeDestinationFolder);
+                }else {
+                    destinationFolder= createFolderBasedOnStrPath(destinationFolderStr);
+                }
             }
             Path destinationPath=destinationFolder.toPath();
 
             Path sourcePath= file.toPath();
             Path targetPath= destinationPath.resolve(sourcePath.getFileName());
             FileTime creationTime  = (FileTime) Files.readAttributes(sourcePath, "creationTime").get("creationTime");
-            Files.move(sourcePath,targetPath);
+            moveOrCopyFile(sourcePath, targetPath);
             Files.setAttribute(targetPath, "creationTime", creationTime);
 
         } catch (IOException e) {
@@ -366,7 +491,7 @@ public class FileHelper {
         }
     }
 
-    private File createFolderBasedOnStrPath(String destinationFolderStr) {
+    private static File createFolderBasedOnStrPath(String destinationFolderStr) {
         File destinationFolder;
         destinationFolder   =new File(destinationFolderStr);
         if (!destinationFolder.exists()){
@@ -386,7 +511,7 @@ public class FileHelper {
         Map<String, Long> fileWithSize = new LinkedHashMap<String, Long>();
         Map<String, File> folderList = new LinkedHashMap<String, File>();
         for (File child : directoryListing) {
-            fileWithSize.put(child.getName(), size(child.toPath()));
+            fileWithSize.put(child.getName(), getFileFolderSizeInByte(child.toPath()));
             if(child.isDirectory()){
                 folderList.put(child.getName(),child);
             }
@@ -417,6 +542,7 @@ public class FileHelper {
     }
 
     public boolean DVDFilesToFolder(String sourceFolderStr, String destinationFolderStr) {
+        setFileOpernation(FileOpernation.MOVE);
         if(StringUtil.isEmpty(sourceFolderStr) || StringUtil.isEmpty(destinationFolderStr)){
             printLine("The source and destination path must not be empty");
             return false;
@@ -440,25 +566,32 @@ public class FileHelper {
 
         return true;
     }
+
+    /**
+     * delete all content inside directory it will empty directory
+     * @param file
+     */
     public void deleteDirectory(File file) {
         if(file.isDirectory()){
-            String[] childFiles = file.list();
+            File[] childFiles = file.listFiles();
             if(childFiles.length==0) {
                 //Directory is empty. Proceed for deletion
-                file.delete();
+//                file.delete();
+                return;
             }
             else {
-                decorate("-");
-                printLine(file.getAbsolutePath()+"\tDirectory is not empty so not deleting considering data loss chances");
-                decorate("*");
-                printLine("Files: "+Arrays.asList(childFiles));
-                decorate("-");
-//                //Directory has other files.
-//                //Need to delete them first
-//                for (String childFilePath :  childFiles) {
-//                    //recursive delete the files
-//                    deleteDirectory(childFilePath);
-//                }
+//                decorate("-");
+//                printLine(file.getAbsolutePath()+"\tDirectory is not empty so not deleting considering data loss chances");
+//                decorate("*");
+//                printLine("Files: "+Arrays.asList(childFiles));
+//                decorate("-");
+                //Directory has other files.
+                //Need to delete them first
+                for (File childFilePath :  childFiles) {
+                    //recursive delete the files
+                    deleteDirectory(childFilePath);
+                    childFilePath.delete();
+                }
             }
 
         }
@@ -473,7 +606,7 @@ public class FileHelper {
             filesToMove.add(file);
         }
     }
-    public List<String> getAllTypes(String sourceFolderStr) {
+    public static List<String> getAllTypes(String sourceFolderStr) {
         printLine("getting all types");
         startProgress();
         Set<String> fileType=new HashSet<>();
@@ -497,7 +630,26 @@ public class FileHelper {
             fileType.add(fileExtension);
         }
     }
+    public static List<File> getAllFiles(String sourceFolderStr) {
+        printLine("getting all file");
+        startProgress();
+        List<File> fileList=new ArrayList<>();
+        try {
+            Path sourceFolder = Paths.get(sourceFolderStr);
+            Files.walk(sourceFolder).forEach(path -> getFileListFromFolder(path.toFile(),fileList));
+        } catch (IOException e) {
+            Output.exception(e);
+        }
+        stopProgress();
+        return fileList;
+    }
+    private static void getFileListFromFolder(File file, List<File> fileList) {
+        if (file.isFile()) {
+            fileList.add(file);
+        }
+    }
     public void moveAllTypes(String sourceFolderStr, String destinationFolderStr, Set<String> fileType) {
+        setFileOpernation(FileHelper.FileOpernation.MOVE);
         printLine("getting all types");
         List<File> filesToMove = getSpecificTypeFiles(sourceFolderStr, fileType);
         moveFilesWithSameFolderStructureOnDestination(sourceFolderStr,destinationFolderStr,filesToMove);

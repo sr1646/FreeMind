@@ -40,6 +40,7 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
+import sr.utility.Output;
 import uk.co.caprica.vlcj.media.TrackType;
 import uk.co.caprica.vlcj.player.base.LogoPosition;
 import uk.co.caprica.vlcj.player.base.MarqueePosition;
@@ -81,6 +82,8 @@ public final class MainFrame extends BaseFrame {
 
     private final Action mediaOpenAction;
     private final Action mediaQuitAction;
+    private final Action mediaOpenListAction;
+    private final Action mediaSaveListAction;
 
     private final Action playbackRendererLocalAction;
 
@@ -160,6 +163,28 @@ public final class MainFrame extends BaseFrame {
             public void actionPerformed(ActionEvent e) {
                 File selectedFolder = getSelectedFolder();
                 playFolderFiles(selectedFolder);
+
+            }
+        };
+
+        mediaOpenListAction = new StandardAction(resource("menu.media.item.savedList")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(application().savePlayerProgress(false)){
+                    AlertBox.infoBox("save list Successfully","Success");
+                }else{
+                    AlertBox.infoBox("list not saved","Success");
+                }
+
+
+            }
+        };
+        mediaSaveListAction = new StandardAction(resource("menu.media.item.openSavedList")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(!application().openPlayerProgress()){
+                    AlertBox.infoBox("list not opened","error");
+                }
 
             }
         };
@@ -272,6 +297,8 @@ public final class MainFrame extends BaseFrame {
         mediaMenu = new JMenu(resource("menu.media").name());
         mediaMenu.setMnemonic(resource("menu.media").mnemonic());
         mediaMenu.add(new JMenuItem(mediaOpenAction));
+        mediaMenu.add(new JMenuItem(mediaSaveListAction));
+        mediaMenu.add(new JMenuItem(mediaOpenListAction));
         mediaRecentMenu = new RecentMediaMenu(resource("menu.media.item.recent")).menu();
         mediaMenu.add(mediaRecentMenu);
         mediaMenu.add(new JSeparator());
@@ -594,17 +621,21 @@ public final class MainFrame extends BaseFrame {
         //
         fileChooser.setAcceptAllFileFilterUsed(false);
         //
-
-        if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION) {
-            debug("getCurrentDirectory(): "
-                    + fileChooser.getCurrentDirectory());
-            debug("getSelectedFile() : "
-                    + fileChooser.getSelectedFile());
-            selectedFolder=fileChooser.getSelectedFile();
-        } else {
-            System.out.println("No Selection ");
-            AlertBox.warningBox("No folder Selected","No folder Selected");
+        try{
+            if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION) {
+                debug("getCurrentDirectory(): "
+                        + fileChooser.getCurrentDirectory());
+                debug("getSelectedFile() : "
+                        + fileChooser.getSelectedFile());
+                selectedFolder=fileChooser.getSelectedFile();
+            } else {
+                System.out.println("No Selection ");
+                AlertBox.warningBox("No folder Selected","No folder Selected");
+            }
+        }catch (RuntimeException e){
+            Output.exception(e);
         }
+
         return selectedFolder;
     }
     public boolean moveConfirmation(String fileDetail){

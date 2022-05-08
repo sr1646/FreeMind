@@ -19,10 +19,10 @@
 
 package uk.co.caprica.vlcjplayer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.eventbus.EventBus;
-import sr.utility.CollectionHelper;
-import sr.utility.FileHelper;
-import sr.utility.StringUtil;
+import sr.utility.*;
 import uk.co.caprica.vlcj.player.component.CallbackMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.component.callback.ScaledCallbackImagePainter;
@@ -34,14 +34,9 @@ import uk.co.caprica.vlcjplayer.view.main.MainFrame;
 import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 
 import javax.swing.*;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +52,8 @@ public final class Application {
     private static final ResourceBundle resourceBundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_BASE_NAME);
 
     private static final int MAX_RECENT_MEDIA_SIZE = 10;
+    public static final String PLAYING_FILE_LIST = "playingFileList";
+    public static final String PLAYING_FILE_PROGRESS = "playingFileProgress";
 
     private final EventBus eventBus;
 
@@ -69,7 +66,9 @@ public final class Application {
     private final ScheduledExecutorService tickService = Executors.newSingleThreadScheduledExecutor();
 
     private final Deque<String> recentMedia = new ArrayDeque<>(MAX_RECENT_MEDIA_SIZE);
-    private List<File> fileList;
+    private LinkedList<File> fileList =null;
+    private boolean isSaveFile=false;
+    private File fileListFolder;
     private String sourceFolder;
     private String destinationFolder;
     private boolean isFileListAvailable=false;
@@ -130,15 +129,31 @@ public final class Application {
                 MainFrame.mainFrame().stopVedeo();
                 Application.application().playFile("doNotDeleteSensitiveForApp.mp4");
                 MainFrame.mainFrame().stopVedeo();
-                application().resetFileList();
-
                 this.destinationFolder = selectedFolder.getAbsolutePath();
                 StringBuilder favoriteDestination;
                 AlertBox.infoBox("Moving files in progress, We will show you success message when process complete.\n Please Click on OK","progress Infor");
                 FileHelper fh=new FileHelper();
                 for(Map.Entry<String,List<File>> favFolderEntry:favFolder.entrySet()) {
                     favoriteDestination=new StringBuilder(destinationFolder).append(File.separator).append(favFolderEntry.getKey());
-                    fh.moveFilesWithSameFolderStructureOnDestination(this.sourceFolder,favoriteDestination.toString(),favFolderEntry.getValue());
+                    List<File> moveFileList=favFolderEntry.getValue();
+                    fh.moveFilesWithSameFolderStructureOnDestination(this.sourceFolder,favoriteDestination.toString(),moveFileList);
+                    if(isSaveFile){
+                        fileTracker-=moveFileList.size();
+                       try{
+                           fileList.removeAll(moveFileList);
+                       }catch (RuntimeException e){
+                           e.printStackTrace();
+                       }
+
+                    }
+                }
+                if(isSaveFile){
+                    fileTracker--;//reseting to previous vedeo then currently playing vedeo
+                    if(fileTracker<0){
+                        fileTracker=0;//can not go negative
+                    }
+                    savePlayerProgress(true);
+                    openFilesFromSavedFolder();
                 }
 
                 AlertBox.infoBox("Successfully Moved all files","Success");
@@ -245,7 +260,7 @@ public final class Application {
     }
 
     public void initFileList(File folder){
-        this.fileList=FileHelper.getSpecificTypeFiles(folder.toPath(),FileHelper.VEDEO_FILES_EXTENSION);
+        this.fileList=new LinkedList<>( FileHelper.getSpecificTypeFiles(folder.toPath(),FileHelper.VEDEO_FILES_EXTENSION));
         if(CollectionHelper.isNotEmpty(fileList)){
             isFileListAvailable=true;
             totalFiles=fileList.size();
@@ -254,8 +269,108 @@ public final class Application {
             resetFileList();
         }
     }
+    public boolean savePlayerProgress(boolean resetFile){
+        // put here is save enable then and only then save progress
+        //need to provide name when saving progress
+        // we will create folder and in side folder we will store progress
 
+
+        try {
+            if(resetFile){
+                String listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
+                File playerFile = new File(listFileName);
+                playerFile.renameTo(new File(listFileName+"_bkp_"+ DateUtil.getNowDateForFileName()));
+                savePlayingFileListToFile();
+            }
+            if(!isSaveFile){
+                fileListFolder=MainFrame.mainFrame().getSelectedFolder();
+                if(fileListFolder==null){
+                    return false;
+                }
+                savePlayingFileListToFile();
+            }
+            isSaveFile=true;
+            List<String> progress=new ArrayList<>();
+            progress.add(String.valueOf(fileTracker));
+            FileHelper.writeFile(progress,fileListFolder+File.separator+ PLAYING_FILE_PROGRESS);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private void savePlayingFileListToFile() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        String playerFiles = null;
+        String listFileName;
+
+        listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
+        File playerFile = new File(listFileName);
+        BufferedWriter writer = null;
+        if(!playerFile.exists()){
+            playerFiles = mapper.writeValueAsString(fileList);
+            FileHelper.writeFile(playerFiles, listFileName);
+        }else{
+            AlertBox.infoBox("File already exist please open it","info");
+            resetFileList();
+        }
+    }
+
+    public boolean openPlayerProgress(){
+        resetFileList();
+        fileListFolder=MainFrame.mainFrame().getSelectedFolder();
+        if(fileListFolder==null){
+            return false;
+        }
+        return openFilesFromSavedFolder();
+    }
+
+    private boolean openFilesFromSavedFolder() {
+        String listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
+        ;
+        List<String> fileListJson=FileHelper.readFile(listFileName);
+        if(fileListJson.size()!=1){
+            AlertBox.errorBox("File does not have correct data expecting only data in single line with json format","Error");
+            resetFileList();
+            return false;
+        }
+        int jsonDataIndex = 0;
+        List<String> playerProgress=FileHelper.readFile(fileListFolder+File.separator+ PLAYING_FILE_PROGRESS);
+        if(playerProgress.size()!=1){
+            AlertBox.errorBox("File does not have correct data expecting only data in single line with json format","Error");
+            resetFileList();
+            return false;
+        }
+        int progressIndex = 0;
+        setSourceFolder(fileListFolder.getAbsolutePath());
+        fileTracker=Integer.valueOf(playerProgress.get(progressIndex));
+        fileTracker--;//sending back to previous index for playing current progress video
+        fileList= new LinkedList<>(getFileList(fileListJson.get(jsonDataIndex)));
+        if(fileList.size()<1){
+            resetFileList();
+            AlertBox.errorBox("No file found from selected saved folder","Error in opening saved list");
+        }
+        isFileListAvailable=true;
+        totalFiles=fileList.size();
+        playNext();
+        isSaveFile=true;
+        return true;
+    }
+
+    private List<File> getFileList(String fileListInJson) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<File> file=null;
+        try {
+            file = Arrays.asList(mapper.readValue(fileListInJson,File[].class));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
     private void resetFileList() {
+        fileListFolder=null;
+        isSaveFile=false;
+        fileList =null;
         isFileListAvailable=false;
         totalFiles=0;
         fileTracker=0;
@@ -277,15 +392,22 @@ public final class Application {
     }
 
     public void playFile(String absoluteFilePath) {
+        StringBuilder fileInfo=new StringBuilder();
+        fileInfo.append("Playing: ");
         if(isFileListAvailable){
-            MainFrame.mainFrame().setTitle("Playing: "+fileTracker+" / "+totalFiles+" : "+absoluteFilePath);
-        }else{
-            MainFrame.mainFrame().setTitle("Playing: "+absoluteFilePath);
-        }
+            fileInfo.append(fileTracker+" / "+totalFiles+" : "+absoluteFilePath);
 
+        }else{
+            fileInfo.append(absoluteFilePath);
+        }
         currentlyPlayingFile=new File(absoluteFilePath);
         mediaPlayer().media().play(absoluteFilePath);
+        fileInfo.append(" ( "+FileHelper.getSizeInGB(FileHelper.getFileFolderSizeInByte(currentlyPlayingFile.toPath()))+" )");
+        MainFrame.mainFrame().setTitle(fileInfo.toString());
         setFavourite();
+        if(isSaveFile) {
+            savePlayerProgress(false);
+        }
     }
     public void playFile(File absoluteFilePath) {
         currentlyPlayingFile=absoluteFilePath;

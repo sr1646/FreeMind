@@ -31,6 +31,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
+import sr.utility.Output;
+import sr.utility.StringUtil;
 import uk.co.caprica.vlcj.player.base.LibVlcConst;
 import uk.co.caprica.vlcjplayer.Application;
 import uk.co.caprica.vlcjplayer.event.PausedEvent;
@@ -173,10 +175,18 @@ final class ControlsPane extends BasePanel {
         addFolder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String folder;
-                do{
-                 folder =JOptionPane.showInputDialog("Enter new folder name:");
-                }while(folder.isEmpty());
+                String folder="";
+                try{
+                    do{
+                        folder =JOptionPane.showInputDialog("Enter new folder name:");
+                    }while(folder.isEmpty());
+                }catch (RuntimeException exception){
+                    Output.exception(exception);
+                }
+                if(StringUtil.isEmpty(folder)){
+                    AlertBox.errorBox("Favourite Folder name not provided","Folder not created");
+                    return;
+                }
                 if(Application.application().isFolderExist(folder)){
                     AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
                     return;

@@ -1,10 +1,9 @@
 package sr.utility;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import sr.basic.Series;
-import uk.co.caprica.vlcj.binding.RuntimeUtil;
-import uk.co.caprica.vlcj.support.Info;
 import uk.co.caprica.vlcjplayer.VlcjPlayer;
-import uk.co.caprica.vlcjplayer.view.main.MainFrame;
 
 import java.io.File;
 import java.util.*;
@@ -25,8 +24,8 @@ public class Main {
     }
     public void driver(){
         showMenu();
-        Task task = getTaskFromStandardInput();
-//        Task task=Task.SHOW_SIZE_OF_FOLDERS ;
+//        Task task = getTaskFromStandardInput();
+        Task task=Task.START_VLC ;
         print("Selected Task: "+task);
 
         switch (task){
@@ -40,11 +39,16 @@ public class Main {
                 addValueInSet();
                 break;
             case MOVE_ALL_FILES_TO_FOLDER:
-                new FileHelper().moveFiles("E:\\test","E:\\birthday");
-//                moveFiles();
+                moveFiles(true);
+                break;
+            case COPY_ALL_FILES_TO_FOLDER:
+                moveFiles(false);
                 break;
             case DEVIDE_DATA_FOR_DVD:
                 devideDvdCompatible();
+                break;
+            case PROCESS_STORED_DVD_DATA:
+                processDvdData();
                 break;
             case DVD_PART_TO_FOLDER:
                 DVDDataToFolder();
@@ -74,6 +78,109 @@ public class Main {
             default :
                 throw new IllegalStateException("Unexpected value: " + task);
         }
+    }
+
+    private void processDvdData() {
+        List<String> dvdData = getSelectedStoreDVDData();
+        if (dvdData == null) return;
+
+        String sourceFolder=dvdData.get(DVDHelper.STORED_DVD_SOURCE_FOLDER_INDEX);
+        String destincationFolder=dvdData.get(DVDHelper.STORED_DVD_DESTINATION_FOLDER_INDEX);
+        Integer currentProgress = getCurrentProgress(dvdData);
+
+        if (currentProgress == null) return;
+        List<DVDHelper> dvdList = getDVDList(dvdData);
+        if(currentProgress>dvdList.size()){
+            Output.printLine("ALL DVD already return please reset progress to start it again");
+            return;
+        }
+
+        DVDHelper dvdToWrite=dvdList.get(++currentProgress);
+        Output.decorate("*");
+        Output.printLine("Currently writing DVD: "+currentProgress);
+        Output.decorate("*");
+        FileHelper fileHelper = new FileHelper();
+        fileHelper.deleteDirectory(new File(destincationFolder));
+        fileHelper.setFileOpernation(FileHelper.FileOpernation.COPY);
+        fileHelper.setDataForDVD(sourceFolder,destincationFolder,currentProgress,dvdToWrite);
+
+        String dvdStoreFile=dvdData.get(DVDHelper.STORED_DVD_FILE_NAME_INDEX);
+
+        FileHelper.updateProgress(currentProgress,dvdStoreFile);
+    }
+
+    private Integer getCurrentProgress(List<String> dvdData) {
+        int currentProgress=0;
+        String strCurrentProgress="";
+        try{
+            strCurrentProgress= dvdData.get(DVDHelper.STORED_DVD_CURRENT_PROGRESS_INDEX);
+            currentProgress=Integer.valueOf(strCurrentProgress);
+        }catch (RuntimeException e){
+            Output.exception(e);
+            Output.printLine("Current progress not readed correctly input number: "+strCurrentProgress);
+            return null;
+        }
+        return currentProgress;
+    }
+
+    private List<DVDHelper> getDVDList(List<String> dvdData) {
+        String dvdDataJson= dvdData.get(DVDHelper.STORED_DVD_DATA_INDEX);
+        ObjectMapper mapper = new ObjectMapper();
+        List<DVDHelper> dvdList=null;
+        try {
+            dvdList = Arrays.asList(mapper.readValue(dvdDataJson,DVDHelper[].class));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return dvdList;
+    }
+
+    private List<String> getSelectedStoreDVDData() {
+        List<File> allFiles = FileHelper.getAllFiles(DVDHelper.STORED_DVD);
+        int counter=0;
+        int choice=0;
+        Iterator<File> iterator=allFiles.iterator();
+        while(iterator.hasNext()){
+            if(iterator.next().toString().contains(DVDHelper.STORED_DVD_PROGRESS_FILE) || iterator.next().toString().contains(DVDHelper.STORED_DVD_DETAIL_FILE)){
+                iterator.remove();
+            }
+        }
+
+        if(allFiles.size()>1){
+            for(File file:allFiles){
+                System.out.println((counter++)+" : "+file);
+            }
+            choice = getSelectedDVDStore(allFiles);
+        }
+        String dvdStoreFile=allFiles.get(choice).getAbsolutePath();
+        List<String> dvdData=FileHelper.readFile(dvdStoreFile);
+        List<String> dvdProgress=FileHelper.readFile(dvdStoreFile+DVDHelper.STORED_DVD_PROGRESS_FILE);
+        dvdData.addAll(dvdProgress);
+        if(dvdData.size()!=DVDHelper.STORED_DVD_DATA_SIZE){
+            Output.printLine("invalid DVD Store File there should be exact 4 line");
+            return null;
+        }
+        dvdData.add(dvdStoreFile);
+        return dvdData;
+    }
+
+    private int getSelectedDVDStore(List<File> allFiles) {
+        Scanner stdIn=new Scanner(System.in);
+        int choice=-1;
+        boolean isInvalidChoice=false;
+        do{
+            if(isInvalidChoice){
+                System.out.println("Invalid choice please try again");
+            }
+            isInvalidChoice=true;
+            System.out.println("Enter index of file you want to continue processing of dvd: ");
+            try{
+                choice=Integer.valueOf(stdIn.nextLine());
+            }catch (RuntimeException e){
+                Output.exception(e);
+            }
+        }while (choice<0 || choice>= allFiles.size());
+        return choice;
     }
 
     private void runVlc() {
@@ -170,24 +277,31 @@ public class Main {
 
     private void devideDvdCompatible() {
 
-        String sourcePath="C:\\as\\experiment\\test"
+        String sourcePath="C:\\Users\\patel\\Desktop\\roshan"
                 ,destinationPath="C:\\as\\experiment\\output";
 //        Scanner standardInput=new Scanner(System.in);
 //        print("Enter source folder:");
 //        sourcePath=standardInput.nextLine();
 //        print("Enter destination folder:");
 //        destinationPath=standardInput.nextLine();
-       new FileHelper().devideFilesForDVD(sourcePath,destinationPath);
+        boolean storeForLaterProcessing=true;
+       new FileHelper().devideFilesForDVD(sourcePath,destinationPath,storeForLaterProcessing);
     }
 
-    private void moveFiles() {
+    private void moveFiles(boolean isMove) {
         Scanner standardInput=new Scanner(System.in);
         String sourcePath,destinationPath;
         printLine("Enter source folder:");
         sourcePath=standardInput.nextLine();
         printLine("Enter destination folder:");
         destinationPath=standardInput.nextLine();
-        new FileHelper().moveFiles(sourcePath,destinationPath);
+        FileHelper fileHelper=new FileHelper();
+        if(isMove){
+            fileHelper.setFileOpernation(FileHelper.FileOpernation.MOVE);
+        }else {
+            fileHelper.setFileOpernation(FileHelper.FileOpernation.COPY);
+        }
+        fileHelper.moveFiles(sourcePath,destinationPath);
     }
 
     private Task getTaskFromStandardInput() {
