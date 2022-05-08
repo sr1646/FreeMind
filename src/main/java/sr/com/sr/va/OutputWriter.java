@@ -1,19 +1,18 @@
 package sr.com.sr.va;
 
+import sr.utility.DateUtil;
 import sr.utility.Output;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class OutputWriter {
     private static PrintWriter printWriter;
     private static File logFile;
     static{
         try {
-            logFile=new File("Log_"+new SimpleDateFormat("yyyy-MM-dd-HH-mm'.txt'").format(new Date()));
+            logFile=new File("Log_"+ DateUtil.getNowDateForFileName()+".txt");
             printWriter  =new PrintWriter(logFile);
         } catch (FileNotFoundException e) {
             Output.exception(e);
