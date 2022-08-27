@@ -24,8 +24,8 @@ public class Main {
     }
     public void driver(){
         showMenu();
-//        Task task = getTaskFromStandardInput();
-        Task task=Task.START_VLC ;
+        Task task = getTaskFromStandardInput();
+//        Task task=Task.START_VLC ;
         print("Selected Task: "+task);
 
         switch (task){
