@@ -47,7 +47,15 @@ public class FileHelper {
     public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
             "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
     }));
+    public static Set<String> AUDIO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
+            "mp3","wav"," AAC","AC3","A52","m4a"
+    }));
 
+    public static Set<String> AUDIO_VIDEO_FILES_EXTENSION=new HashSet<>();
+    static{
+        AUDIO_VIDEO_FILES_EXTENSION.addAll(VEDEO_FILES_EXTENSION);
+        AUDIO_VIDEO_FILES_EXTENSION.addAll(AUDIO_FILES_EXTENSION);
+    }
     /*
     ################################################################################################################################
     ################################################################################################################################
@@ -329,14 +337,18 @@ public class FileHelper {
         decorate("#",30);
         return true;
     }
-
-    private static void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+    public static String objectToJSON(Object o){
         ObjectMapper mapper = new ObjectMapper();
-        String dvdDetailJson = null;
+        String json = null;
         try {
-
-            dvdDetailJson = mapper.writeValueAsString(dvdListStore);
-
+            json = mapper.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+    private static void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+        String dvdDetailJson = objectToJSON(dvdListStore);
             List<String> dvdFileInfo=new ArrayList<>();
             dvdFileInfo.add(sourceFolderStr);
             dvdFileInfo.add(destinationFolderStr);
@@ -349,9 +361,7 @@ public class FileHelper {
             writeFile(dvdFileInfo,dvdStoreFileName);
             writeFile(dvdDetail,dvdStoreFileName+DVDHelper.STORED_DVD_DETAIL_FILE);
             updateProgress(DVDHelper.STORED_DVD_INITIAL_PROGRESS, dvdStoreFileName);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+
     }
 
     private static String getDVDStoreName() {
@@ -678,28 +688,38 @@ public class FileHelper {
 
     private static void addFileTypeToMove(File file, List<File> fileToMove, Set<String> fileType) {
         if (file.isFile()) {
-            String fileName=file.getAbsolutePath().trim().toLowerCase();
-            int beginIndex = fileName.lastIndexOf(".");
-            if(beginIndex<0){
-                debug(". not found when looking for extension");
-             return;
-            }
-            beginIndex++;
-            if(beginIndex>=fileName.length()){
-                debug(".(dot) found at end of the file there is no extention after .(dot)");
-                return;
-            }
+            String fileExtension = getFileExtension(file);
+            if (fileExtension == null) return;
 
-            String fileExtension=fileName.substring(beginIndex);
-            if(fileExtension.isEmpty()){
-                printLine("File without extension: "+fileName);
-                return;
-            }
-
-                if(fileType.contains(fileExtension)){
+            if(fileType.contains(fileExtension)){
                     fileToMove.add(file);
                 }
         }
+    }
+
+    public static String getFileExtension(File file) {
+        String fileName= file.getAbsolutePath().trim().toLowerCase();
+        return getFileExtension(fileName);
+    }
+    public static String getFileExtension(String fileName) {
+
+        int beginIndex = fileName.lastIndexOf(".");
+        if(beginIndex<0){
+            debug(". not found when looking for extension");
+            return null;
+        }
+        beginIndex++;
+        if(beginIndex>=fileName.length()){
+            debug(".(dot) found at end of the file there is no extention after .(dot)");
+            return null;
+        }
+
+        String fileExtension=fileName.substring(beginIndex);
+        if(fileExtension.isEmpty()){
+            printLine("File without extension: "+fileName);
+            return null;
+        }
+        return fileExtension;
     }
 
     public static void setAllFilesNameAndRepeatedFile(String sourceFolderStr, Set<String> allUniqueFileName, Map<String, Integer> repeatedFile) {

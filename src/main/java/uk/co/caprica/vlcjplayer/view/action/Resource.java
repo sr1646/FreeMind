@@ -24,6 +24,9 @@ import static uk.co.caprica.vlcjplayer.Application.resources;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public final class Resource {
 
@@ -79,20 +82,43 @@ public final class Resource {
     public Icon menuIcon() {
         String key = id + ".menuIcon";
         if (resources().containsKey(key)) {
-            return new ImageIcon(getClass().getResource("/icons/actions/" + resources().getString(key) + ".png"));
+            URL resource = getClass().getResource("/icons/actions/" + resources().getString(key) + ".png");
+                if(resource==null){
+                    System.out.println("resource is null setting default ICON");
+                    return getDefaultResource();
+                }
+            return new ImageIcon(resource);
         }
         else {
-            return null;
+            System.out.println("menuIcon : resource is not contain key setting default ICON");
+            return getDefaultResource();
         }
+    }
+
+    private ImageIcon getDefaultResource() {
+        URL resource = null;
+        try {
+            resource = new File("C:\\Users\\patel\\Documents\\FreeMind\\out\\artifacts\\FreeMind_jar\\mi.ico").toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Default Resource"+resource);
+        return new ImageIcon(resource);
     }
 
     public Icon buttonIcon() {
         String key = id + ".buttonIcon";
         if (resources().containsKey(key)) {
-            return new ImageIcon(getClass().getResource("/icons/buttons/" + resources().getString(key) + ".png"));
+            URL resource = getClass().getResource("/icons/buttons/" + resources().getString(key) + ".png");
+            if(resource==null){
+                System.out.println("resource is null setting default ICON");
+                return getDefaultResource();
+            }
+            return new ImageIcon(resource);
         }
         else {
-            return null;
+            System.out.println("buttonIcon : resource is not contain key setting default ICON");
+            return getDefaultResource();
         }
     }
 }
