@@ -9,7 +9,6 @@ public class Output {
         doPrint(message);
     }
     private static final String exceptionFile="logOfException.txt";
-    private static FileHelper fileHelper=new FileHelper();
     public static void print(Object message) {
         if(message ==null){
             System.out.print("null");
@@ -37,8 +36,9 @@ public class Output {
         return baos.toString();
     }
     public static void exception(Exception e) {
-        fileHelper.writeFile(e.getMessage(),exceptionFile);
-        fileHelper.writeFile(exceptionStacktraceToString(e),exceptionFile);
+        FileHelper.writeFile(DateUtil.getNowDateForlogs(),exceptionFile);
+        FileHelper.writeFile(e.getMessage(),exceptionFile);
+        FileHelper.writeFile(exceptionStacktraceToString(e),exceptionFile);
     }
     public static void decorate(String decorator) {
         decorate(decorator,20);

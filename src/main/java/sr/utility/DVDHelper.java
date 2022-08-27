@@ -1,7 +1,6 @@
 package sr.utility;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,10 +9,20 @@ import java.util.Queue;
 import static sr.utility.Output.printLine;
 
 public class DVDHelper {
+    public static final String STORED_DVD = "storedDvd";
+    public static final String  STORED_DVD_PROGRESS_FILE = "_progress";
+    public static final String  STORED_DVD_DETAIL_FILE = "_detail";
+    public static final Integer STORED_DVD_INITIAL_PROGRESS = -1;
+    public static final Integer STORED_DVD_SOURCE_FOLDER_INDEX = 0;
+    public static final Integer STORED_DVD_DESTINATION_FOLDER_INDEX = 1;
+    public static final Integer STORED_DVD_DATA_INDEX = 2;
+    public static final Integer STORED_DVD_CURRENT_PROGRESS_INDEX = 3;
+    public static final Integer STORED_DVD_FILE_NAME_INDEX = 4;
+    public static final Integer STORED_DVD_DATA_SIZE = 4;
     private static final long GIGABYTE = 1024;
-    private static final long DVD_MAX_CAPACITY_IN_GB = 45;
-    private static final long DVD_MAX_CAPACITY_IN_MB = DVD_MAX_CAPACITY_IN_GB*GIGABYTE;
-    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 150;
+    private static final float DVD_MAX_CAPACITY_IN_GB = 4.37f;
+    private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
+    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 50;
 //    private static final long DVD_MAX_CAPACITY_IN_MB = 700;
 //    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 20;
     private static final long MAX_SIZE_IN_MB = DVD_MAX_CAPACITY_IN_MB * GIGABYTE * GIGABYTE;
@@ -29,7 +38,6 @@ public class DVDHelper {
     private FileHelper fileHelper = new FileHelper();
 
     public DVDHelper() {
-
     }
     private long getSizeInMB() {
         long mb = ((size) / GIGABYTE / GIGABYTE);
@@ -44,11 +52,9 @@ public class DVDHelper {
 
         long fileSize = 0;
         if (file.isFile()) {
-            fileSize = fileHelper.size(file.toPath());
+            fileSize = fileHelper.getFileFolderSizeInByte(file.toPath());
             size += fileSize;
             if (size > MAX_SIZE_IN_MB) {
-                long dvdSize=fileHelper.getSizeInMB(size);
-                long maxSize=fileHelper.getSizeInMB(MAX_SIZE_IN_MB);
                 size -= fileSize;
                 //skip this file temporarily we will try to add this file first whenever new dvd added so add it in queue
                 //also check like if file size is bigger than current max size then add them in max limit exceed file add it in list
@@ -89,13 +95,24 @@ public class DVDHelper {
         }
     }
 
-    @Override
-    public String toString() {
-        return "DVD Details {" +
+//    @Override
+//    public String toString() {
+//        return "DVD Details {" +
+//                "total filesToMove=" + filesToMove.size() +
+//                ", size=" + getSizeInMB() + "MB" +
+//                '}';
+//    }
+    public String dvdInfo(){
+        return  "DVD Details {" +
                 "total filesToMove=" + filesToMove.size() +
                 ", size=" + getSizeInMB() + "MB" +
                 '}';
     }
+    @Override
+    public String toString() {
+        return filesToMove.toString();
+    }
+
 
     public void visitSkippedFile(List<DVDHelper> dvdList) {
 

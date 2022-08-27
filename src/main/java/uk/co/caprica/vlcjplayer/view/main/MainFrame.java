@@ -40,6 +40,7 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
+import sr.utility.Output;
 import uk.co.caprica.vlcj.media.TrackType;
 import uk.co.caprica.vlcj.player.base.LogoPosition;
 import uk.co.caprica.vlcj.player.base.MarqueePosition;
@@ -59,14 +60,12 @@ import uk.co.caprica.vlcjplayer.event.RendererAddedEvent;
 import uk.co.caprica.vlcjplayer.event.RendererDeletedEvent;
 import uk.co.caprica.vlcjplayer.event.ShowDebugEvent;
 import uk.co.caprica.vlcjplayer.event.ShowEffectsEvent;
-import uk.co.caprica.vlcjplayer.event.ShowMessagesEvent;
 import uk.co.caprica.vlcjplayer.event.SnapshotImageEvent;
 import uk.co.caprica.vlcjplayer.event.StoppedEvent;
 import uk.co.caprica.vlcjplayer.view.BaseFrame;
 import uk.co.caprica.vlcjplayer.view.action.StandardAction;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.RendererAction;
-import uk.co.caprica.vlcjplayer.view.debug.DebugFrame;
 import uk.co.caprica.vlcjplayer.view.snapshot.SnapshotView;
 
 import com.google.common.eventbus.Subscribe;
@@ -159,10 +158,12 @@ public final class MainFrame extends BaseFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFolder = getSelectedFolder();
-                playFolderFiles(selectedFolder);
-
+                if(!application().openPlayerProgress(selectedFolder)){
+                    playFolderFiles(selectedFolder);
+                }
             }
         };
+
 
         mediaQuitAction = new StandardAction(resource("menu.media.item.quit")) {
             @Override
@@ -454,7 +455,13 @@ public final class MainFrame extends BaseFrame {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        videoContentPane.showVideo();
+                        if(Application.application().isCurrentlyPlayingAudioFile()){
+                            videoContentPane.playAudio();
+                        }else{
+                            videoContentPane.playVideo();
+                        }
+
+
 //                        mouseMovementDetector.start();
                         application().post(PlayingEvent.INSTANCE);
                     }
@@ -594,17 +601,21 @@ public final class MainFrame extends BaseFrame {
         //
         fileChooser.setAcceptAllFileFilterUsed(false);
         //
-
-        if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION) {
-            debug("getCurrentDirectory(): "
-                    + fileChooser.getCurrentDirectory());
-            debug("getSelectedFile() : "
-                    + fileChooser.getSelectedFile());
-            selectedFolder=fileChooser.getSelectedFile();
-        } else {
-            System.out.println("No Selection ");
-            AlertBox.warningBox("No folder Selected","No folder Selected");
+        try{
+            if (fileChooser.showOpenDialog(MainFrame.this) == JFileChooser.APPROVE_OPTION) {
+                debug("getCurrentDirectory(): "
+                        + fileChooser.getCurrentDirectory());
+                debug("getSelectedFile() : "
+                        + fileChooser.getSelectedFile());
+                selectedFolder=fileChooser.getSelectedFile();
+            } else {
+                System.out.println("No Selection ");
+                AlertBox.warningBox("No folder Selected","No folder Selected");
+            }
+        }catch (RuntimeException e){
+            Output.exception(e);
         }
+
         return selectedFolder;
     }
     public boolean moveConfirmation(String fileDetail){

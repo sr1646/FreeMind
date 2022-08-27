@@ -23,6 +23,7 @@ import static uk.co.caprica.vlcjplayer.Application.application;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
+import sr.utility.Output;
+import sr.utility.StringUtil;
 import uk.co.caprica.vlcj.player.base.LibVlcConst;
 import uk.co.caprica.vlcjplayer.Application;
 import uk.co.caprica.vlcjplayer.event.PausedEvent;
@@ -173,20 +176,25 @@ final class ControlsPane extends BasePanel {
         addFolder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String folder;
-                do{
-                 folder =JOptionPane.showInputDialog("Enter new folder name:");
-                }while(folder.isEmpty());
+                String folder="";
+                try{
+                    do{
+                        //folder =JOptionPane.showInputDialog("Enter new folder name:");
+                        File selectedFolder=MainFrame.mainFrame().getSelectedFolder();
+                        folder=selectedFolder.getAbsolutePath();
+                    }while(folder.isEmpty());
+                }catch (RuntimeException exception){
+                    Output.exception(exception);
+                }
+                if(StringUtil.isEmpty(folder)){
+                    AlertBox.errorBox("Favourite Folder name not provided","Folder not created");
+                    return;
+                }
                 if(Application.application().isFolderExist(folder)){
                     AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
                     return;
                 }
-                JButton newFolder=new StandardButton();
-                newFolder.setText(folder);
-                add(newFolder);
-                favFolderList.add(newFolder);
-                newFolder.addActionListener(new FavFolderButtonEventListener());
-                Application.application().addFavFolder(folder);
+                createFavFolder(folder);
             }
         });
         moveFavouriteFolder.addActionListener(new ActionListener() {
@@ -223,6 +231,15 @@ final class ControlsPane extends BasePanel {
         });
         Application.application().setFavFolderButtonList(favFolderList);
         Application.application().setFavButtonIcon(favButtonIcon);
+    }
+
+    public void createFavFolder(String folder) {
+        JButton newFolder=new StandardButton();
+        newFolder.setText(folder);
+        add(newFolder);
+        favFolderList.add(newFolder);
+        newFolder.addActionListener(new FavFolderButtonEventListener());
+        Application.application().addFavFolder(folder);
     }
 
     @Subscribe
