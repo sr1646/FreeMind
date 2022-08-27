@@ -23,6 +23,7 @@ import static uk.co.caprica.vlcjplayer.Application.application;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -178,7 +179,9 @@ final class ControlsPane extends BasePanel {
                 String folder="";
                 try{
                     do{
-                        folder =JOptionPane.showInputDialog("Enter new folder name:");
+                        //folder =JOptionPane.showInputDialog("Enter new folder name:");
+                        File selectedFolder=MainFrame.mainFrame().getSelectedFolder();
+                        folder=selectedFolder.getAbsolutePath();
                     }while(folder.isEmpty());
                 }catch (RuntimeException exception){
                     Output.exception(exception);
@@ -191,12 +194,7 @@ final class ControlsPane extends BasePanel {
                     AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
                     return;
                 }
-                JButton newFolder=new StandardButton();
-                newFolder.setText(folder);
-                add(newFolder);
-                favFolderList.add(newFolder);
-                newFolder.addActionListener(new FavFolderButtonEventListener());
-                Application.application().addFavFolder(folder);
+                createFavFolder(folder);
             }
         });
         moveFavouriteFolder.addActionListener(new ActionListener() {
@@ -233,6 +231,15 @@ final class ControlsPane extends BasePanel {
         });
         Application.application().setFavFolderButtonList(favFolderList);
         Application.application().setFavButtonIcon(favButtonIcon);
+    }
+
+    public void createFavFolder(String folder) {
+        JButton newFolder=new StandardButton();
+        newFolder.setText(folder);
+        add(newFolder);
+        favFolderList.add(newFolder);
+        newFolder.addActionListener(new FavFolderButtonEventListener());
+        Application.application().addFavFolder(folder);
     }
 
     @Subscribe

@@ -60,14 +60,12 @@ import uk.co.caprica.vlcjplayer.event.RendererAddedEvent;
 import uk.co.caprica.vlcjplayer.event.RendererDeletedEvent;
 import uk.co.caprica.vlcjplayer.event.ShowDebugEvent;
 import uk.co.caprica.vlcjplayer.event.ShowEffectsEvent;
-import uk.co.caprica.vlcjplayer.event.ShowMessagesEvent;
 import uk.co.caprica.vlcjplayer.event.SnapshotImageEvent;
 import uk.co.caprica.vlcjplayer.event.StoppedEvent;
 import uk.co.caprica.vlcjplayer.view.BaseFrame;
 import uk.co.caprica.vlcjplayer.view.action.StandardAction;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.RendererAction;
-import uk.co.caprica.vlcjplayer.view.debug.DebugFrame;
 import uk.co.caprica.vlcjplayer.view.snapshot.SnapshotView;
 
 import com.google.common.eventbus.Subscribe;
@@ -82,8 +80,6 @@ public final class MainFrame extends BaseFrame {
 
     private final Action mediaOpenAction;
     private final Action mediaQuitAction;
-    private final Action mediaOpenListAction;
-    private final Action mediaSaveListAction;
 
     private final Action playbackRendererLocalAction;
 
@@ -162,32 +158,12 @@ public final class MainFrame extends BaseFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 File selectedFolder = getSelectedFolder();
-                playFolderFiles(selectedFolder);
-
-            }
-        };
-
-        mediaOpenListAction = new StandardAction(resource("menu.media.item.savedList")) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(application().savePlayerProgress(false)){
-                    AlertBox.infoBox("save list Successfully","Success");
-                }else{
-                    AlertBox.infoBox("list not saved","Success");
+                if(!application().openPlayerProgress(selectedFolder)){
+                    playFolderFiles(selectedFolder);
                 }
-
-
             }
         };
-        mediaSaveListAction = new StandardAction(resource("menu.media.item.openSavedList")) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(!application().openPlayerProgress()){
-                    AlertBox.infoBox("list not opened","error");
-                }
 
-            }
-        };
 
         mediaQuitAction = new StandardAction(resource("menu.media.item.quit")) {
             @Override
@@ -297,8 +273,6 @@ public final class MainFrame extends BaseFrame {
         mediaMenu = new JMenu(resource("menu.media").name());
         mediaMenu.setMnemonic(resource("menu.media").mnemonic());
         mediaMenu.add(new JMenuItem(mediaOpenAction));
-        mediaMenu.add(new JMenuItem(mediaSaveListAction));
-        mediaMenu.add(new JMenuItem(mediaOpenListAction));
         mediaRecentMenu = new RecentMediaMenu(resource("menu.media.item.recent")).menu();
         mediaMenu.add(mediaRecentMenu);
         mediaMenu.add(new JSeparator());
@@ -481,7 +455,13 @@ public final class MainFrame extends BaseFrame {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        videoContentPane.showVideo();
+                        if(Application.application().isCurrentlyPlayingAudioFile()){
+                            videoContentPane.playAudio();
+                        }else{
+                            videoContentPane.playVideo();
+                        }
+
+
 //                        mouseMovementDetector.start();
                         application().post(PlayingEvent.INSTANCE);
                     }

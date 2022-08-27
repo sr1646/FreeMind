@@ -34,7 +34,6 @@ import uk.co.caprica.vlcjplayer.view.main.MainFrame;
 import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 
 import javax.swing.*;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -67,7 +66,6 @@ public final class Application {
 
     private final Deque<String> recentMedia = new ArrayDeque<>(MAX_RECENT_MEDIA_SIZE);
     private LinkedList<File> fileList =null;
-    private boolean isSaveFile=false;
     private File fileListFolder;
     private String sourceFolder;
     private String destinationFolder;
@@ -75,6 +73,7 @@ public final class Application {
     private int fileTracker=0;
     private int totalFiles=0;
     private File currentlyPlayingFile;
+    private boolean currentlyPlayingAudioFile;
     private List<File> favFileList=new ArrayList<File>();
     private Map<String,List<File>> favFolder =new HashMap<String,List<File>>();
     private List<JButton> favFolderButtonList;
@@ -95,6 +94,9 @@ public final class Application {
      */
     private VideoOutput videoOutput = VideoOutput.CALLBACK;
 
+    public boolean isCurrentlyPlayingAudioFile() {
+        return currentlyPlayingAudioFile;
+    }
 
     public File getCurrentlyPlayingFile() {
         return currentlyPlayingFile;
@@ -120,8 +122,8 @@ public final class Application {
             return;
         }
 
-        File selectedFolder=MainFrame.mainFrame().getSelectedFolder();
-        if(selectedFolder!=null){
+       // File selectedFolder=MainFrame.mainFrame().getSelectedFolder();
+        //if(selectedFolder!=null){
             String fileDetail=favFolder.entrySet().stream()
                     .map(e -> e.getKey() + "\n++++++++++++++++\n " + e.getValue().toString().replaceAll(", ","\n")+"\n")
                     .collect(Collectors.joining("\n------------------------------------------------------\n"));
@@ -129,39 +131,35 @@ public final class Application {
                 MainFrame.mainFrame().stopVedeo();
                 Application.application().playFile("doNotDeleteSensitiveForApp.mp4");
                 MainFrame.mainFrame().stopVedeo();
-                this.destinationFolder = selectedFolder.getAbsolutePath();
+                this.destinationFolder ="";// selectedFolder.getAbsolutePath();
                 StringBuilder favoriteDestination;
                 AlertBox.infoBox("Moving files in progress, We will show you success message when process complete.\n Please Click on OK","progress Infor");
                 FileHelper fh=new FileHelper();
                 for(Map.Entry<String,List<File>> favFolderEntry:favFolder.entrySet()) {
-                    favoriteDestination=new StringBuilder(destinationFolder).append(File.separator).append(favFolderEntry.getKey());
+//                    favoriteDestination=new StringBuilder(destinationFolder).append(File.separator).append(favFolderEntry.getKey());
+                    favoriteDestination=new StringBuilder(favFolderEntry.getKey());
                     List<File> moveFileList=favFolderEntry.getValue();
                     fh.moveFilesWithSameFolderStructureOnDestination(this.sourceFolder,favoriteDestination.toString(),moveFileList);
-                    if(isSaveFile){
                         fileTracker-=moveFileList.size();
                        try{
                            fileList.removeAll(moveFileList);
                        }catch (RuntimeException e){
                            e.printStackTrace();
                        }
-
-                    }
                 }
-                if(isSaveFile){
                     fileTracker--;//reseting to previous vedeo then currently playing vedeo
                     if(fileTracker<0){
                         fileTracker=0;//can not go negative
                     }
                     savePlayerProgress(true);
                     openFilesFromSavedFolder();
-                }
 
                 AlertBox.infoBox("Successfully Moved all files","Success");
                 application().initFileList(new File(sourceFolder));
             }
-        }else{
-            AlertBox.warningBox("Not moving any file as destination folder not selected","No Action Taken");
-        }
+//        }else{
+//            AlertBox.warningBox("Not moving any file as destination folder not selected","No Action Taken");
+//        }
     }
 
 
@@ -174,6 +172,7 @@ public final class Application {
     }
 
     public static ResourceBundle resources() {
+        System.out.println(resourceBundle);
         return resourceBundle;
     }
 
@@ -260,7 +259,7 @@ public final class Application {
     }
 
     public void initFileList(File folder){
-        this.fileList=new LinkedList<>( FileHelper.getSpecificTypeFiles(folder.toPath(),FileHelper.VEDEO_FILES_EXTENSION));
+        this.fileList=new LinkedList<>( FileHelper.getSpecificTypeFiles(folder.toPath(),FileHelper.AUDIO_VIDEO_FILES_EXTENSION));
         if(CollectionHelper.isNotEmpty(fileList)){
             isFileListAvailable=true;
             totalFiles=fileList.size();
@@ -270,55 +269,48 @@ public final class Application {
         }
     }
     public boolean savePlayerProgress(boolean resetFile){
-        // put here is save enable then and only then save progress
-        //need to provide name when saving progress
-        // we will create folder and in side folder we will store progress
-
-
-        try {
-            if(resetFile){
-                String listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
-                File playerFile = new File(listFileName);
-                playerFile.renameTo(new File(listFileName+"_bkp_"+ DateUtil.getNowDateForFileName()));
-                savePlayingFileListToFile();
-            }
-            if(!isSaveFile){
-                fileListFolder=MainFrame.mainFrame().getSelectedFolder();
-                if(fileListFolder==null){
-                    return false;
-                }
-                savePlayingFileListToFile();
-            }
-            isSaveFile=true;
-            List<String> progress=new ArrayList<>();
-            progress.add(String.valueOf(fileTracker));
-            FileHelper.writeFile(progress,fileListFolder+File.separator+ PLAYING_FILE_PROGRESS);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        if(sourceFolder==null){
+            Output.debug("No folder selection set yet so can not save file progress");
+            return false;
         }
+        if (resetFile) {
+            String listFileName = fileListFolder.getAbsolutePath() + File.separator + PLAYING_FILE_LIST;
+            File playerFile = new File(listFileName);
+            playerFile.renameTo(new File(listFileName + "_bkp_" + DateUtil.getNowDateForFileName()));
+            savePlayingFileListToFile();
+        }
+            fileListFolder = new File(sourceFolder);//MainFrame.mainFrame().getSelectedFolder();
+            if (fileListFolder == null) {
+                return false;
+            }
+            savePlayingFileListToFile();
+        List<String> progress = new ArrayList<>();
+        progress.add(String.valueOf(fileTracker));
+        progress.add(FileHelper.objectToJSON(favFileList));
+        progress.add(FileHelper.objectToJSON(favFolder));
+        FileHelper.writeFile(progress, fileListFolder + File.separator + PLAYING_FILE_PROGRESS);
+
         return true;
     }
 
-    private void savePlayingFileListToFile() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+    private void savePlayingFileListToFile() {
         String playerFiles = null;
         String listFileName;
-
         listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
         File playerFile = new File(listFileName);
-        BufferedWriter writer = null;
         if(!playerFile.exists()){
-            playerFiles = mapper.writeValueAsString(fileList);
+            playerFiles = FileHelper.objectToJSON(fileList);
             FileHelper.writeFile(playerFiles, listFileName);
         }else{
-            AlertBox.infoBox("File already exist please open it","info");
-            resetFileList();
+            // do nothing
+//            AlertBox.infoBox("File already exist please open it","info");
+//            resetFileList();
         }
     }
 
-    public boolean openPlayerProgress(){
+    public boolean openPlayerProgress(File selectedFolder){
         resetFileList();
-        fileListFolder=MainFrame.mainFrame().getSelectedFolder();
+        fileListFolder=selectedFolder;
         if(fileListFolder==null){
             return false;
         }
@@ -326,18 +318,23 @@ public final class Application {
     }
 
     private boolean openFilesFromSavedFolder() {
+        try {
+
+
         String listFileName=fileListFolder.getAbsolutePath()+File.separator+PLAYING_FILE_LIST;
         ;
         List<String> fileListJson=FileHelper.readFile(listFileName);
-        if(fileListJson.size()!=1){
-            AlertBox.errorBox("File does not have correct data expecting only data in single line with json format","Error");
+        int expectedNumberOfLineForFileList = 1;
+        if(fileListJson.size()!= expectedNumberOfLineForFileList){
+            Output.debug("File does not have correct data expecting only data in "+expectedNumberOfLineForFileList+" line with json format");
             resetFileList();
             return false;
         }
         int jsonDataIndex = 0;
         List<String> playerProgress=FileHelper.readFile(fileListFolder+File.separator+ PLAYING_FILE_PROGRESS);
-        if(playerProgress.size()!=1){
-            AlertBox.errorBox("File does not have correct data expecting only data in single line with json format","Error");
+        int expectedNumberOfLineForFileProgress = 3;
+        if(playerProgress.size()!= expectedNumberOfLineForFileProgress){
+            Output.debug("File does not have correct data, expecting only data in "+expectedNumberOfLineForFileProgress+" line with json format");
             resetFileList();
             return false;
         }
@@ -349,14 +346,22 @@ public final class Application {
         if(fileList.size()<1){
             resetFileList();
             AlertBox.errorBox("No file found from selected saved folder","Error in opening saved list");
+            return false;
+        }
+        if(fileTracker<0){
+            fileTracker=0;
         }
         isFileListAvailable=true;
         totalFiles=fileList.size();
+        // put here logic for getting fav folder and fav file list also make fave folder button in ui for same.
+        //when open folder by default save progress in same folder
         playNext();
-        isSaveFile=true;
         return true;
+    } catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
     }
-
     private List<File> getFileList(String fileListInJson) {
         ObjectMapper mapper = new ObjectMapper();
         List<File> file=null;
@@ -369,7 +374,6 @@ public final class Application {
     }
     private void resetFileList() {
         fileListFolder=null;
-        isSaveFile=false;
         fileList =null;
         isFileListAvailable=false;
         totalFiles=0;
@@ -401,14 +405,25 @@ public final class Application {
             fileInfo.append(absoluteFilePath);
         }
         currentlyPlayingFile=new File(absoluteFilePath);
+        currentlyPlayingAudioFile =false;
+        if(isAudioFile(absoluteFilePath)){
+            currentlyPlayingAudioFile =true;
+        }
         mediaPlayer().media().play(absoluteFilePath);
         fileInfo.append(" ( "+FileHelper.getSizeInGB(FileHelper.getFileFolderSizeInByte(currentlyPlayingFile.toPath()))+" )");
         MainFrame.mainFrame().setTitle(fileInfo.toString());
         setFavourite();
-        if(isSaveFile) {
-            savePlayerProgress(false);
-        }
+        savePlayerProgress(false);
     }
+
+    private boolean isAudioFile(String absoluteFilePath) {
+        String fileType=FileHelper.getFileExtension(absoluteFilePath);
+        if(FileHelper.AUDIO_FILES_EXTENSION.contains(fileType)){
+            return true;
+        }
+        return false;
+    }
+
     public void playFile(File absoluteFilePath) {
         currentlyPlayingFile=absoluteFilePath;
         playFile(absoluteFilePath.getAbsolutePath());
