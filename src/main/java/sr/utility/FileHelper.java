@@ -721,7 +721,13 @@ public class FileHelper {
         }
         return fileExtension;
     }
-
+    public static boolean isAudioFile(String absoluteFilePath) {
+        String fileType=FileHelper.getFileExtension(absoluteFilePath);
+        if(FileHelper.AUDIO_FILES_EXTENSION.contains(fileType)){
+            return true;
+        }
+        return false;
+    }
     public static void setAllFilesNameAndRepeatedFile(String sourceFolderStr, Set<String> allUniqueFileName, Map<String, Integer> repeatedFile) {
         Path sourceFolder = Paths.get(sourceFolderStr);
         startProgress();

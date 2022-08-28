@@ -120,7 +120,7 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
 
         app = new VlcjPlayer();
         app.start();
-        MainFrame.mainFrame().playFolderFiles(new File("E:\\AS\\entertainment\\vedeo song\\bollywood\\romantic"));
+       // MainFrame.mainFrame().playFolderFiles(new File("E:\\AS\\entertainment\\vedeo song\\bollywood\\romantic"));
 
     }
 

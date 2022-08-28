@@ -406,7 +406,7 @@ public final class Application {
         }
         currentlyPlayingFile=new File(absoluteFilePath);
         currentlyPlayingAudioFile =false;
-        if(isAudioFile(absoluteFilePath)){
+        if(FileHelper.isAudioFile(absoluteFilePath)){
             currentlyPlayingAudioFile =true;
         }
         mediaPlayer().media().play(absoluteFilePath);
@@ -416,13 +416,7 @@ public final class Application {
         savePlayerProgress(false);
     }
 
-    private boolean isAudioFile(String absoluteFilePath) {
-        String fileType=FileHelper.getFileExtension(absoluteFilePath);
-        if(FileHelper.AUDIO_FILES_EXTENSION.contains(fileType)){
-            return true;
-        }
-        return false;
-    }
+
 
     public void playFile(File absoluteFilePath) {
         currentlyPlayingFile=absoluteFilePath;
