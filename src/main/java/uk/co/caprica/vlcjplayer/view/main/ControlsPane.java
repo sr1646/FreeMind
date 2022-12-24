@@ -149,14 +149,11 @@ final class ControlsPane extends BasePanel {
 
         add(fullscreenButton, "sg 1");
         add(extendedButton, "sg 1");
-
         add(snapshotButton, "sg 1");
-        add(addFolder);
-        add(moveFavouriteFolder);
-
-
         add(muteButton, "sg 1");
-        add(volumeSlider, "wmax 100");
+        add(volumeSlider, "wrap");
+        add(addFolder);
+        add(moveFavouriteFolder,"wrap");
 
         volumeSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -235,9 +232,18 @@ final class ControlsPane extends BasePanel {
 
     public void createFavFolder(String folder) {
         JButton newFolder=new StandardButton();
-        newFolder.setText(folder);
-        add(newFolder);
         favFolderList.add(newFolder);
+        int currentFolderCount = favFolderList.size();
+        newFolder.setText(currentFolderCount+" - "+folder);
+
+        int columnInOneRowAllowed = 7;
+        int allColumnFilled = 0;
+        boolean setButtonInNextRow= currentFolderCount % columnInOneRowAllowed == allColumnFilled;
+        String miglayoutConstraint="";
+        if(setButtonInNextRow){
+            miglayoutConstraint="wrap";
+        }
+        add(newFolder,miglayoutConstraint);
         newFolder.addActionListener(new FavFolderButtonEventListener());
         Application.application().addFavFolder(folder);
     }
