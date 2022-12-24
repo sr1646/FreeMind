@@ -133,6 +133,7 @@ public final class MainFrame extends BaseFrame {
     private final PositionPane positionPane;
 
     private final ControlsPane controlsPane;
+    private final FavPane favPane;
 
     private final StatusBar statusBar;
 
@@ -420,23 +421,24 @@ public final class MainFrame extends BaseFrame {
 
         fileChooser = new JFileChooser();
 
-        bottomPane = new JPanel();
-        bottomPane.setLayout(new BorderLayout());
 
         JPanel bottomControlsPane = new JPanel();
         bottomControlsPane.setLayout(new MigLayout("fill, insets 0 n n n", "[grow]", "[]0[]"));
-
         positionPane = new PositionPane();
-        bottomControlsPane.add(positionPane, "grow, wrap");
 
-        controlsPane = new ControlsPane(mediaPlayerActions);
+        bottomPane = new JPanel();
+        bottomPane.setLayout(new BorderLayout());
         bottomPane.add(bottomControlsPane, BorderLayout.CENTER);
-        bottomControlsPane.add(controlsPane, "grow");
-
+        favPane = new FavPane();
+        controlsPane = new ControlsPane(mediaPlayerActions,favPane);
         statusBar = new StatusBar();
         bottomPane.add(statusBar, BorderLayout.SOUTH);
-
         contentPane.add(bottomPane, BorderLayout.SOUTH);
+        bottomControlsPane.add(favPane, "grow, wrap");
+        bottomControlsPane.add(positionPane, "grow, wrap");
+        bottomControlsPane.add(controlsPane, "grow, wrap");
+
+
 
         MediaPlayerEventListener mediaPlayerEventListener = (new MediaPlayerEventAdapter() {
 

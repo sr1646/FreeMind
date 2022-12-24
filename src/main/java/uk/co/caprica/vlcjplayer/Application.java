@@ -455,7 +455,7 @@ public final class Application {
 
     private void setFavourite(String favFolderName) {
         for(JButton button:favFolderButtonList){
-            if(button.getText().equalsIgnoreCase(favFolderName)){
+            if(button.getToolTipText().equalsIgnoreCase(favFolderName)){
                     button.setIcon(favButtonIcon);
             }else {
                 button.setIcon(null);

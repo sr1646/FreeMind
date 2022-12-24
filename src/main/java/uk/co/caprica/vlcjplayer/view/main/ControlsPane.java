@@ -95,8 +95,10 @@ final class ControlsPane extends BasePanel {
     private final List<JButton> favFolderList=new ArrayList<>();
 
     private final JSlider volumeSlider;
+    private final FavPane favPane;
 
-    ControlsPane(MediaPlayerActions mediaPlayerActions) {
+    ControlsPane(MediaPlayerActions mediaPlayerActions, FavPane favPane) {
+        this.favPane=favPane;
         playPauseButton = new BigButton();
         playPauseButton.setAction(mediaPlayerActions.playbackPlayAction());
 
@@ -149,11 +151,14 @@ final class ControlsPane extends BasePanel {
 
         add(fullscreenButton, "sg 1");
         add(extendedButton, "sg 1");
+
         add(snapshotButton, "sg 1");
-        add(muteButton, "sg 1");
-        add(volumeSlider, "wrap");
         add(addFolder);
-        add(moveFavouriteFolder,"wrap");
+        add(moveFavouriteFolder);
+
+
+        add(muteButton, "sg 1");
+        add(volumeSlider, "wmax 650");
 
         volumeSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -232,18 +237,27 @@ final class ControlsPane extends BasePanel {
 
     public void createFavFolder(String folder) {
         JButton newFolder=new StandardButton();
+        newFolder.setToolTipText(folder);
         favFolderList.add(newFolder);
-        int currentFolderCount = favFolderList.size();
-        newFolder.setText(currentFolderCount+" - "+folder);
+        final int currentFolderCount = favFolderList.size();
+        final int folderDisplayCharacter=28;
+        final int folderNameLength=folder.length();
+        String buttonName="";
+        if(folderNameLength>folderDisplayCharacter){
+            buttonName=currentFolderCount+" - "+folder.substring(folderNameLength-folderDisplayCharacter);
+        }else {
+            buttonName=currentFolderCount+" - "+folder;
+        }
+        newFolder.setText(buttonName);
 
-        int columnInOneRowAllowed = 7;
-        int allColumnFilled = 0;
+        final int columnInOneRowAllowed = 10;
+        final int allColumnFilled = 0;
         boolean setButtonInNextRow= currentFolderCount % columnInOneRowAllowed == allColumnFilled;
         String miglayoutConstraint="";
         if(setButtonInNextRow){
             miglayoutConstraint="wrap";
         }
-        add(newFolder,miglayoutConstraint);
+        favPane.add(newFolder,miglayoutConstraint);
         newFolder.addActionListener(new FavFolderButtonEventListener());
         Application.application().addFavFolder(folder);
     }
