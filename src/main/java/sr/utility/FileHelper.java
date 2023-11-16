@@ -43,7 +43,7 @@ public class FileHelper {
     }
 
     private FileOpernation fileOpernation =FileOpernation.MOVE;
-    private boolean createSameFolderStructure=false;
+    private boolean createSameFolderStructure=true;
     public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
             "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
     }));
@@ -293,7 +293,7 @@ public class FileHelper {
         }
 
     }
-    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr, boolean storeForLaterProcessing) {
+    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr) {
         setFileOpernation(FileHelper.FileOpernation.MOVE);
         if(StringUtil.isEmpty(sourceFolderStr) || StringUtil.isEmpty(destinationFolderStr)){
             printLine("The source and destination path must not be empty");
@@ -317,18 +317,12 @@ public class FileHelper {
         decorate("*",30);
         List<DVDHelper> dvdListStore=new ArrayList<>();
         List <String> dvdDetail=new ArrayList<>();
+        logDVDInfo(sourceFolderStr, destinationFolderStr, dvdList, dvdListStore, dvdDetail);
         for(DVDHelper DVD :dvdList){
-            if(storeForLaterProcessing){
-                dvdDetail.add(DVD.dvdInfo());
-                dvdListStore.add(DVD);
-            }else{
-                setDataForDVD(sourceFolderStr, destinationFolderStr, ++part, DVD);
-            }
+            dvdDetail.add(DVD.dvdInfo());
+            dvdListStore.add(DVD);
+            setDataForDVD(sourceFolderStr, destinationFolderStr, ++part, DVD);
         }
-        if(storeForLaterProcessing){
-            saveDVDDataToFile(sourceFolderStr, destinationFolderStr, dvdListStore,dvdDetail);
-        }
-
 
         decorate("*",30);
         printLine("\n");
@@ -337,6 +331,18 @@ public class FileHelper {
         decorate("#",30);
         return true;
     }
+
+    private void logDVDInfo(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdList, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+        for(DVDHelper DVD : dvdList){
+                dvdDetail.add(DVD.dvdInfo());
+                dvdListStore.add(DVD);
+        }
+        saveDVDDataToFile(sourceFolderStr, destinationFolderStr, dvdListStore, dvdDetail);
+        setFileOpernation(FileHelper.FileOpernation.COPY);
+        moveFiles(DVDHelper.STORED_DVD,destinationFolderStr);
+        setFileOpernation(FileHelper.FileOpernation.MOVE);
+    }
+
     public static String objectToJSON(Object o){
         ObjectMapper mapper = new ObjectMapper();
         String json = null;
@@ -347,21 +353,20 @@ public class FileHelper {
         }
         return json;
     }
-    private static void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+    private void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
         String dvdDetailJson = objectToJSON(dvdListStore);
             List<String> dvdFileInfo=new ArrayList<>();
             dvdFileInfo.add(sourceFolderStr);
             dvdFileInfo.add(destinationFolderStr);
             dvdFileInfo.add(dvdDetailJson);
-
+            deleteDirectory(new File(DVDHelper.STORED_DVD));
             createFolderBasedOnStrPath(DVDHelper.STORED_DVD);
 
-            String dvdStoreFileName = getDVDStoreName();
+            String dvdStoreFileName = "NSL_";//getDVDStoreName();
             dvdStoreFileName=DVDHelper.STORED_DVD+File.separator+dvdStoreFileName+"_"+DateUtil.getNowDateForFileName();
-            writeFile(dvdFileInfo,dvdStoreFileName);
+            writeFile(dvdFileInfo,dvdStoreFileName+".log");
             writeFile(dvdDetail,dvdStoreFileName+DVDHelper.STORED_DVD_DETAIL_FILE);
             updateProgress(DVDHelper.STORED_DVD_INITIAL_PROGRESS, dvdStoreFileName);
-
     }
 
     private static String getDVDStoreName() {
@@ -479,6 +484,7 @@ public class FileHelper {
     private void moveFile(String destinationFolderStr, File file, String relativeDestinationFolder) {
         try {
             File destinationFolder;
+            relativeDestinationFolder=relativeDestinationFolder.trim();
             if("".equals(relativeDestinationFolder)){
                 destinationFolder= createFolderBasedOnStrPath(destinationFolderStr);
             }else{

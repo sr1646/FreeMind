@@ -63,4 +63,13 @@ For accessing first 0-9 folder numeric key
 
 when opening folder if we are not opening folder do not reset existing playing play list
 
-Open windhow should remember last place we have opened 
+Open windhow should remember last place we have opened
+
+## LATEST
+Need to create DVD writer upgrade
+1. Will move content of dvd to some folder. (done)
+2. Verify content of DVD it is worth to put. (done)
+3. If removed some content from DVD then re-put content. (done)
+4. Once content created for DVD write it to DVD. (done)
+5. Once content written to DVD copy it to back=up done folder in same folder architecture as it was in back-up remaining (done)
+6. I should be able to create multiple DVD folder if i wanted. (done)

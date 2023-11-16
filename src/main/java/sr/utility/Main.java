@@ -15,6 +15,10 @@ import static sr.utility.Output.print;
 import static sr.utility.Output.printLine;
 
 public class Main {
+
+    public static final String NS_SOURCE_FOLDER = "N:\\Tester\\source";
+    public static final String NS_DESTINATION_FOLDER = "N:\\Tester\\output";
+
     private void showMenu(){
         for(Task task:Task.values()){
             printLine(task.ordinal()+" "+task);
@@ -53,24 +57,30 @@ public class Main {
             case DVD_PART_TO_FOLDER:
                 DVDDataToFolder();
                 break;
+            case DVD_PART_OUTPUT_TO_SOURCE:
+                DVDDataToFolderOutputToSource();
+                break;
+            case DVD_PART_OUTPUT_TO_BACKUP_DONE_FOLDER:
+                DVDDataToFolderOutputToBackUpDoneFolder();
+                break;
             case GENERATE_SERIESE:
                 System.out.println(new Series().getSeriese());
                 break;
             case SHOW_SIZE_OF_FOLDERS:
-                showFolderSize("F:\\test\\web\\test");
+                showFolderSize(NS_SOURCE_FOLDER);
                 break;
             case SHOW_ALL_TYPE_OF_FILE_FROM_FOLDER:
-                showTypesFromFolder("C:\\as\\experiment\\test");
+                showTypesFromFolder(NS_SOURCE_FOLDER);
                 break;
             case SEPARATE_VIDEO_AND_PHOTO:
-                moveSpecificTypeFile("C:\\as\\experiment\\test","C:\\as\\experiment\\vedeo",FileHelper.VEDEO_FILES_EXTENSION);
+                moveSpecificTypeFile(NS_SOURCE_FOLDER,NS_DESTINATION_FOLDER,FileHelper.VEDEO_FILES_EXTENSION);
                 break;
             case LIST_SPECIFIC_TYPE_FILES:
-                showFilesMatchingWithType("C:\\as\\experiment\\vedeo",FileHelper.VEDEO_FILES_EXTENSION);
+                showFilesMatchingWithType(NS_SOURCE_FOLDER,FileHelper.VEDEO_FILES_EXTENSION);
                 break;
             case COMPARE_FILE_BY_NAME_AND_EXTENSION:
 //                compareFolder("C:\\as\\experiment\\original","C:\\as\\experiment\\test");
-                compareFolder("C:\\as\\secure","E:\\AS\\CLASSIFIED\\MOBILE CAMERA\\already_taken_backup\\google_photos\\dvd_gphoto");
+                compareFolder(NS_SOURCE_FOLDER,NS_DESTINATION_FOLDER);
                 break;
             case START_VLC:
                 runVlc();
@@ -260,8 +270,27 @@ public class Main {
 
 
     private void DVDDataToFolder() {
-        String sourcePath="C:\\as\\experiment\\output"
-                ,destinationPath="C:\\as\\experiment\\test";
+        String sourcePath=NS_SOURCE_FOLDER
+                ,destinationPath=NS_DESTINATION_FOLDER;
+//        Scanner standardInput=new Scanner(System.in);
+//        print("Enter source folder:");
+//        sourcePath=standardInput.nextLine();
+//        print("Enter destination folder:");
+//        destinationPath=standardInput.nextLine();
+        new FileHelper().DVDFilesToFolder(sourcePath,destinationPath);
+    }
+    private void DVDDataToFolderOutputToSource() {
+        String sourcePath=NS_SOURCE_FOLDER
+                ,destinationPath=NS_DESTINATION_FOLDER;
+//        Scanner standardInput=new Scanner(System.in);
+//        print("Enter source folder:");
+//        sourcePath=standardInput.nextLine();
+//        print("Enter destination folder:");
+//        destinationPath=standardInput.nextLine();
+        new FileHelper().DVDFilesToFolder(destinationPath,sourcePath);
+    }private void DVDDataToFolderOutputToBackUpDoneFolder() {
+        String sourcePath=NS_DESTINATION_FOLDER
+                ,destinationPath="N:\\Tester\\backup_done";
 //        Scanner standardInput=new Scanner(System.in);
 //        print("Enter source folder:");
 //        sourcePath=standardInput.nextLine();
@@ -277,15 +306,14 @@ public class Main {
 
     private void devideDvdCompatible() {
 
-        String sourcePath="C:\\Users\\patel\\Desktop\\roshan"
-                ,destinationPath="C:\\as\\experiment\\output";
+        String sourcePath= NS_SOURCE_FOLDER
+                ,destinationPath= NS_DESTINATION_FOLDER;
 //        Scanner standardInput=new Scanner(System.in);
 //        print("Enter source folder:");
 //        sourcePath=standardInput.nextLine();
 //        print("Enter destination folder:");
 //        destinationPath=standardInput.nextLine();
-        boolean storeForLaterProcessing=true;
-       new FileHelper().devideFilesForDVD(sourcePath,destinationPath,storeForLaterProcessing);
+       new FileHelper().devideFilesForDVD(sourcePath,destinationPath);
     }
 
     private void moveFiles(boolean isMove) {
