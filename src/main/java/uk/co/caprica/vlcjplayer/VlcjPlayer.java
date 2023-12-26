@@ -19,26 +19,17 @@
 
 package uk.co.caprica.vlcjplayer;
 
-import com.sun.jna.NativeLibrary;
-import sr.utility.FileHelper;
-import sr.utility.StringUtil;
+//import sun.util.logging.PlatformLogger;
 import uk.co.caprica.nativestreams.NativeStreams;
-import uk.co.caprica.vlcj.binding.LibC;
-import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.binding.RuntimeUtil;
+import uk.co.caprica.vlcj.log.NativeLog;
 import uk.co.caprica.vlcj.player.component.CallbackMediaPlayerComponent;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.player.renderer.RendererDiscoverer;
 import uk.co.caprica.vlcj.player.renderer.RendererDiscovererDescription;
 import uk.co.caprica.vlcj.player.renderer.RendererDiscovererEventListener;
 import uk.co.caprica.vlcj.player.renderer.RendererItem;
 import uk.co.caprica.vlcj.support.Info;
-import uk.co.caprica.vlcj.binding.RuntimeUtil;
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
-import uk.co.caprica.vlcj.log.NativeLog;
-import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
-import uk.co.caprica.vlcj.player.embedded.fullscreen.exclusivemode.ExclusiveModeFullScreenStrategy;
-import uk.co.caprica.vlcjplayer.event.AfterExitFullScreenEvent;
-import uk.co.caprica.vlcjplayer.event.BeforeEnterFullScreenEvent;
 import uk.co.caprica.vlcjplayer.event.RendererAddedEvent;
 import uk.co.caprica.vlcjplayer.event.RendererDeletedEvent;
 import uk.co.caprica.vlcjplayer.event.ShutdownEvent;
@@ -48,10 +39,8 @@ import uk.co.caprica.vlcjplayer.view.main.MainFrame;
 import uk.co.caprica.vlcjplayer.view.messages.NativeLogFrame;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,12 +104,13 @@ public class VlcjPlayer implements RendererDiscovererEventListener {
             System.out.printf("DYLD_LIBRARY_PATH          : %s%n", val(info.dyldLibraryPath()));
             System.out.printf("DYLD_FALLBACK_LIBRARY_PATH : %s%n", val(info.dyldFallbackLibraryPath()));
         }
-
+//            PlatformLogger logger = PlatformLogger.getLogger("java.util.prefs");
+//            logger.setLevel(PlatformLogger.Level.SEVERE);
         setLookAndFeel();
 
         app = new VlcjPlayer();
         app.start();
-        MainFrame.mainFrame().playFolderFiles(new File("E:\\AS\\entertainment\\vedeo song\\bollywood\\romantic"));
+       // MainFrame.mainFrame().playFolderFiles(new File("E:\\AS\\entertainment\\vedeo song\\bollywood\\romantic"));
 
     }
 

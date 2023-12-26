@@ -9,9 +9,9 @@ import java.util.Queue;
 import static sr.utility.Output.printLine;
 
 public class DVDHelper {
-    public static final String STORED_DVD = "storedDvd";
-    public static final String  STORED_DVD_PROGRESS_FILE = "_progress";
-    public static final String  STORED_DVD_DETAIL_FILE = "_detail";
+    public static final String STORED_DVD = "storedDvdLog";
+    public static final String  STORED_DVD_PROGRESS_FILE = "_progress.log";
+    public static final String  STORED_DVD_DETAIL_FILE = "_detail.log";
     public static final Integer STORED_DVD_INITIAL_PROGRESS = -1;
     public static final Integer STORED_DVD_SOURCE_FOLDER_INDEX = 0;
     public static final Integer STORED_DVD_DESTINATION_FOLDER_INDEX = 1;
@@ -23,8 +23,11 @@ public class DVDHelper {
     private static final float DVD_MAX_CAPACITY_IN_GB = 4.37f;
     private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
     private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 50;
-//    private static final long DVD_MAX_CAPACITY_IN_MB = 700;
-//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 20;
+
+    //    private static final long DVD_MAX_CAPACITY_IN_MB = 20;
+//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 1;
+    private static final long ALLOW_TOTAL_DVD_AS_OF_NOW = 3;
+    private static boolean MAX_DVD_ADDED = false;
     private static final long MAX_SIZE_IN_MB = DVD_MAX_CAPACITY_IN_MB * GIGABYTE * GIGABYTE;
 
 
@@ -49,7 +52,6 @@ public class DVDHelper {
     }
 
     private boolean addFile(File file, List<DVDHelper> dvdList) {
-
         long fileSize = 0;
         if (file.isFile()) {
             fileSize = fileHelper.getFileFolderSizeInByte(file.toPath());
@@ -77,25 +79,36 @@ public class DVDHelper {
 
 
     public void addFileToDVD(File file, List<DVDHelper> dvdList) {
+        if(MAX_DVD_ADDED){
+            return;
+        }
         dvdList.get(currentDVD).addFile(file, dvdList);
     }
 
     private void addNewDVD(List<DVDHelper> dvdList) {
         // this method will only add dvd if it have free space less then allowed free space
         if (dvdList.get(currentDVD).getFreeMB() < ALLOWED_FREE_SPACE_OF_DVD_IN_MB) {
-
-
             //add skipped list queue first
             if(skippedFile.size()>0){
                 visitSkippedFile(dvdList);
             }else{
-                printLine("new dvd container added for regular dvd making recursive call: for index: " + (++currentDVD));
-                dvdList.add(new DVDHelper());
+                addDVD(dvdList);
             }
         }
     }
 
-//    @Override
+    private void addDVD(List<DVDHelper> dvdList) {
+        if(currentDVD<ALLOW_TOTAL_DVD_AS_OF_NOW){
+            printLine("new dvd container added for regular dvd making recursive call: for index: " + (++currentDVD));
+            dvdList.add(new DVDHelper());
+        }else{
+            //stop the operation we have already reached allowed dvd
+            printLine("MAXIMUM DVD Created Can not create new DVD" + (currentDVD));
+            MAX_DVD_ADDED=true;
+        }
+    }
+
+    //    @Override
 //    public String toString() {
 //        return "DVD Details {" +
 //                "total filesToMove=" + filesToMove.size() +
@@ -129,8 +142,7 @@ public class DVDHelper {
 
             printLine("Full Queue copied: so size should zero: skippedFile.size() = "+skippedFile.size());
             printLine("\nTaking care of Skipped file round: "+skippedFileRound+++"\n");
-            dvdList.add(new DVDHelper());
-            printLine("new dvd container added for Skipped file DVD making recursive call: for index: " + (++currentDVD));
+            addDVD(dvdList);
             //add skipped list queue first
             for(File file:copySkippedFile){
                  addFileToDVD(file, dvdList);

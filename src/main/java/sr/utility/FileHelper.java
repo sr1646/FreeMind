@@ -1,9 +1,6 @@
 package sr.utility;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,10 +18,23 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static sr.utility.Output.*;
+import static sr.utility.Output.debug;
+import static sr.utility.Output.decorate;
+import static sr.utility.Output.drawProgressBar;
+import static sr.utility.Output.printLine;
+import static sr.utility.Output.startProgress;
+import static sr.utility.Output.stopProgress;
 
 public class FileHelper {
 
@@ -43,7 +53,7 @@ public class FileHelper {
     }
 
     private FileOpernation fileOpernation =FileOpernation.MOVE;
-    private boolean createSameFolderStructure=false;
+    private boolean createSameFolderStructure=true;
     public static Set<String> VEDEO_FILES_EXTENSION=new HashSet<>(Arrays.asList(new String[]{
             "mpeg", "es", "ps", "ts", "pva", "avi", "asf", "wmv", "wma", "mp4", "mov", "3gp", "ogg", "ogm", "annodex", "axv", "mkv", "real", "flv", "mxf", "nut", "dat"
     }));
@@ -187,6 +197,9 @@ public class FileHelper {
     public static boolean writeFile(String line,String fileName){
 
         BufferedWriter writer = null;
+        if(line==null){
+            line="null";
+        }
         try {
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName,true), encoding));
             writer.write(line);
@@ -259,6 +272,8 @@ public class FileHelper {
     }
 
     private  static void close(BufferedReader reader) {
+        if(reader==null)
+            return;
         try {
             reader.close();
         } catch (IOException e) {
@@ -293,7 +308,7 @@ public class FileHelper {
         }
 
     }
-    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr, boolean storeForLaterProcessing) {
+    public  boolean devideFilesForDVD(String sourceFolderStr, String destinationFolderStr) {
         setFileOpernation(FileHelper.FileOpernation.MOVE);
         if(StringUtil.isEmpty(sourceFolderStr) || StringUtil.isEmpty(destinationFolderStr)){
             printLine("The source and destination path must not be empty");
@@ -317,18 +332,12 @@ public class FileHelper {
         decorate("*",30);
         List<DVDHelper> dvdListStore=new ArrayList<>();
         List <String> dvdDetail=new ArrayList<>();
+        logDVDInfo(sourceFolderStr, destinationFolderStr, dvdList, dvdListStore, dvdDetail);
         for(DVDHelper DVD :dvdList){
-            if(storeForLaterProcessing){
-                dvdDetail.add(DVD.dvdInfo());
-                dvdListStore.add(DVD);
-            }else{
-                setDataForDVD(sourceFolderStr, destinationFolderStr, ++part, DVD);
-            }
+            dvdDetail.add(DVD.dvdInfo());
+            dvdListStore.add(DVD);
+            setDataForDVD(sourceFolderStr, destinationFolderStr, ++part, DVD);
         }
-        if(storeForLaterProcessing){
-            saveDVDDataToFile(sourceFolderStr, destinationFolderStr, dvdListStore,dvdDetail);
-        }
-
 
         decorate("*",30);
         printLine("\n");
@@ -337,31 +346,33 @@ public class FileHelper {
         decorate("#",30);
         return true;
     }
-    public static String objectToJSON(Object o){
-        ObjectMapper mapper = new ObjectMapper();
-        String json = null;
-        try {
-            json = mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+
+    private void logDVDInfo(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdList, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+        for(DVDHelper DVD : dvdList){
+                dvdDetail.add(DVD.dvdInfo());
+                dvdListStore.add(DVD);
         }
-        return json;
+        saveDVDDataToFile(sourceFolderStr, destinationFolderStr, dvdListStore, dvdDetail);
+        setFileOpernation(FileHelper.FileOpernation.COPY);
+        moveFiles(DVDHelper.STORED_DVD,destinationFolderStr);
+        setFileOpernation(FileHelper.FileOpernation.MOVE);
     }
-    private static void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
-        String dvdDetailJson = objectToJSON(dvdListStore);
+
+
+    private void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
+        String dvdDetailJson = JsonUtil.objectToJSON(dvdListStore);
             List<String> dvdFileInfo=new ArrayList<>();
             dvdFileInfo.add(sourceFolderStr);
             dvdFileInfo.add(destinationFolderStr);
             dvdFileInfo.add(dvdDetailJson);
-
+            deleteDirectory(new File(DVDHelper.STORED_DVD));
             createFolderBasedOnStrPath(DVDHelper.STORED_DVD);
 
-            String dvdStoreFileName = getDVDStoreName();
+            String dvdStoreFileName = "NSL_";//getDVDStoreName();
             dvdStoreFileName=DVDHelper.STORED_DVD+File.separator+dvdStoreFileName+"_"+DateUtil.getNowDateForFileName();
-            writeFile(dvdFileInfo,dvdStoreFileName);
+            writeFile(dvdFileInfo,dvdStoreFileName+".log");
             writeFile(dvdDetail,dvdStoreFileName+DVDHelper.STORED_DVD_DETAIL_FILE);
             updateProgress(DVDHelper.STORED_DVD_INITIAL_PROGRESS, dvdStoreFileName);
-
     }
 
     private static String getDVDStoreName() {
@@ -479,6 +490,7 @@ public class FileHelper {
     private void moveFile(String destinationFolderStr, File file, String relativeDestinationFolder) {
         try {
             File destinationFolder;
+            relativeDestinationFolder=relativeDestinationFolder.trim();
             if("".equals(relativeDestinationFolder)){
                 destinationFolder= createFolderBasedOnStrPath(destinationFolderStr);
             }else{
@@ -721,7 +733,13 @@ public class FileHelper {
         }
         return fileExtension;
     }
-
+    public static boolean isAudioFile(String absoluteFilePath) {
+        String fileType=FileHelper.getFileExtension(absoluteFilePath);
+        if(FileHelper.AUDIO_FILES_EXTENSION.contains(fileType)){
+            return true;
+        }
+        return false;
+    }
     public static void setAllFilesNameAndRepeatedFile(String sourceFolderStr, Set<String> allUniqueFileName, Map<String, Integer> repeatedFile) {
         Path sourceFolder = Paths.get(sourceFolderStr);
         startProgress();

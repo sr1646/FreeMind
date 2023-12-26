@@ -10,4 +10,10 @@ public class StringUtil {
     public static boolean isNotEmpty(String value){
         return (!isEmpty(value));
     }
+    public static String chkNull(Object str){
+        if(str==null){
+            return "";
+        }
+        return String.valueOf(str).trim();
+    }
 }

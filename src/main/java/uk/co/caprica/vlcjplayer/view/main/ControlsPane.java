@@ -19,18 +19,7 @@
 
 package uk.co.caprica.vlcjplayer.view.main;
 
-import static uk.co.caprica.vlcjplayer.Application.application;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import sr.utility.Output;
 import sr.utility.StringUtil;
@@ -42,11 +31,20 @@ import uk.co.caprica.vlcjplayer.event.ShowEffectsEvent;
 import uk.co.caprica.vlcjplayer.event.StoppedEvent;
 import uk.co.caprica.vlcjplayer.view.BasePanel;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
-
-import com.google.common.eventbus.Subscribe;
 import uk.co.caprica.vlcjplayer.view.util.AlertBox;
 
-final class ControlsPane extends BasePanel {
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import static uk.co.caprica.vlcjplayer.Application.application;
+
+final public class ControlsPane extends BasePanel {
 
     private final Icon playIcon = newIcon("play");
 
@@ -95,8 +93,10 @@ final class ControlsPane extends BasePanel {
     private final List<JButton> favFolderList=new ArrayList<>();
 
     private final JSlider volumeSlider;
+    private final FavPane favPane;
 
-    ControlsPane(MediaPlayerActions mediaPlayerActions) {
+    ControlsPane(MediaPlayerActions mediaPlayerActions, FavPane favPane) {
+        this.favPane=favPane;
         playPauseButton = new BigButton();
         playPauseButton.setAction(mediaPlayerActions.playbackPlayAction());
 
@@ -156,7 +156,7 @@ final class ControlsPane extends BasePanel {
 
 
         add(muteButton, "sg 1");
-        add(volumeSlider, "wmax 100");
+        add(volumeSlider, "wmax 650");
 
         volumeSlider.addChangeListener(new ChangeListener() {
             @Override
@@ -195,6 +195,7 @@ final class ControlsPane extends BasePanel {
                     return;
                 }
                 createFavFolder(folder);
+                Application.application().savePlayerProgress(false);
             }
         });
         moveFavouriteFolder.addActionListener(new ActionListener() {
@@ -235,9 +236,27 @@ final class ControlsPane extends BasePanel {
 
     public void createFavFolder(String folder) {
         JButton newFolder=new StandardButton();
-        newFolder.setText(folder);
-        add(newFolder);
+        newFolder.setToolTipText(folder);
         favFolderList.add(newFolder);
+        final int currentFolderCount = favFolderList.size();
+        final int folderDisplayCharacter=28;
+        final int folderNameLength=folder.length();
+        String buttonName="";
+        if(folderNameLength>folderDisplayCharacter){
+            buttonName=currentFolderCount+" - "+folder.substring(folderNameLength-folderDisplayCharacter);
+        }else {
+            buttonName=currentFolderCount+" - "+folder;
+        }
+        newFolder.setText(buttonName);
+
+        final int columnInOneRowAllowed = 20;
+        final int allColumnFilled = 0;
+        boolean setButtonInNextRow= currentFolderCount % columnInOneRowAllowed == allColumnFilled;
+        String miglayoutConstraint="";
+        if(setButtonInNextRow){
+            miglayoutConstraint="wrap";
+        }
+        favPane.add(newFolder,miglayoutConstraint);
         newFolder.addActionListener(new FavFolderButtonEventListener());
         Application.application().addFavFolder(folder);
     }

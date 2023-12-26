@@ -24,7 +24,8 @@ public class FavFolderButtonEventListener implements ActionListener{
                 AlertBox.errorBox("Something went wrong Button object not found during cast","internal error");
                 return;
             }
-            favFolderName = b.getText();
+            favFolderName = b.getToolTipText();
+
             Application.application().addFavouriteFileTo(favFolderName);
         }
 }
