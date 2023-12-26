@@ -1,12 +1,20 @@
 package sr.utility;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import sr.basic.Series;
 import uk.co.caprica.vlcjplayer.VlcjPlayer;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,9 +36,9 @@ public class Main {
     }
     public void driver(){
         showMenu();
-        Task task = getTaskFromStandardInput();
-//        Task task=Task.START_VLC ;
-        print("Selected Task: "+task);
+//        Task task = getTaskFromStandardInput();
+        Task task=Task.START_VLC ;
+//        print("Selected Task: "+task);
 
         switch (task){
             case SHOW_ALL_FOLDER:
@@ -99,7 +107,8 @@ public class Main {
         Integer currentProgress = getCurrentProgress(dvdData);
 
         if (currentProgress == null) return;
-        List<DVDHelper> dvdList = getDVDList(dvdData);
+        String dvdDataJson= dvdData.get(DVDHelper.STORED_DVD_DATA_INDEX);
+        List<DVDHelper> dvdList = JsonUtil.getDVDList(dvdDataJson);
         if(currentProgress>dvdList.size()){
             Output.printLine("ALL DVD already return please reset progress to start it again");
             return;
@@ -133,17 +142,7 @@ public class Main {
         return currentProgress;
     }
 
-    private List<DVDHelper> getDVDList(List<String> dvdData) {
-        String dvdDataJson= dvdData.get(DVDHelper.STORED_DVD_DATA_INDEX);
-        ObjectMapper mapper = new ObjectMapper();
-        List<DVDHelper> dvdList=null;
-        try {
-            dvdList = Arrays.asList(mapper.readValue(dvdDataJson,DVDHelper[].class));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        return dvdList;
-    }
+
 
     private List<String> getSelectedStoreDVDData() {
         List<File> allFiles = FileHelper.getAllFiles(DVDHelper.STORED_DVD);

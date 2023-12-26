@@ -19,37 +19,18 @@
 
 package uk.co.caprica.vlcjplayer.view.main;
 
-import static sr.utility.Output.debug;
-import static uk.co.caprica.vlcjplayer.Application.application;
-import static uk.co.caprica.vlcjplayer.Application.resources;
-import static uk.co.caprica.vlcjplayer.view.action.Resource.resource;
-
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.prefs.Preferences;
-
-import javax.swing.*;
-
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import sr.utility.Output;
-import uk.co.caprica.vlcj.media.TrackType;
-import uk.co.caprica.vlcj.player.base.LogoPosition;
-import uk.co.caprica.vlcj.player.base.MarqueePosition;
 import uk.co.caprica.vlcj.media.MediaSlaveType;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
+import uk.co.caprica.vlcj.media.TrackType;
 import uk.co.caprica.vlcj.player.base.Logo;
+import uk.co.caprica.vlcj.player.base.LogoPosition;
 import uk.co.caprica.vlcj.player.base.Marquee;
+import uk.co.caprica.vlcj.player.base.MarqueePosition;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
 import uk.co.caprica.vlcj.player.renderer.RendererItem;
 import uk.co.caprica.vlcjplayer.Application;
 import uk.co.caprica.vlcjplayer.event.AfterExitFullScreenEvent;
@@ -67,9 +48,24 @@ import uk.co.caprica.vlcjplayer.view.action.StandardAction;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.MediaPlayerActions;
 import uk.co.caprica.vlcjplayer.view.action.mediaplayer.RendererAction;
 import uk.co.caprica.vlcjplayer.view.snapshot.SnapshotView;
-
-import com.google.common.eventbus.Subscribe;
 import uk.co.caprica.vlcjplayer.view.util.AlertBox;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.prefs.Preferences;
+
+import static sr.utility.Output.debug;
+import static uk.co.caprica.vlcjplayer.Application.application;
+import static uk.co.caprica.vlcjplayer.Application.resources;
+import static uk.co.caprica.vlcjplayer.view.action.Resource.resource;
 
 @SuppressWarnings("serial")
 public final class MainFrame extends BaseFrame {
@@ -132,7 +128,13 @@ public final class MainFrame extends BaseFrame {
 
     private final PositionPane positionPane;
 
+
+    public ControlsPane getControlsPane() {
+        return controlsPane;
+    }
+
     private final ControlsPane controlsPane;
+
     private final FavPane favPane;
 
     private final StatusBar statusBar;
@@ -487,7 +489,7 @@ public final class MainFrame extends BaseFrame {
                     @Override
                     public void run() {
 //                        mouseMovementDetector.stop();
-                        stopVedeo();
+                        stopVideo();
                     }
                 });
             }
@@ -587,7 +589,7 @@ public final class MainFrame extends BaseFrame {
         }
     }
 
-    public void stopVedeo() {
+    public void stopVideo() {
         videoContentPane.showDefault();
         application().post(StoppedEvent.INSTANCE);
     }
@@ -595,7 +597,7 @@ public final class MainFrame extends BaseFrame {
     public File getSelectedFolder() {
         File selectedFolder=null;
         Preferences prefs = Preferences.userNodeForPackage(MainFrame.class);
-        fileChooser.setCurrentDirectory(new File(prefs.get("chooserDirectory",".")));
+        fileChooser.setCurrentDirectory(application().getLastOpenedFolder());
         fileChooser.setDialogTitle("Select Folder");
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         //
@@ -610,6 +612,7 @@ public final class MainFrame extends BaseFrame {
                 debug("getSelectedFile() : "
                         + fileChooser.getSelectedFile());
                 selectedFolder=fileChooser.getSelectedFile();
+                application().setLastOpenedFolder(selectedFolder);
             } else {
                 System.out.println("No Selection ");
                 AlertBox.warningBox("No folder Selected","No folder Selected");
@@ -649,7 +652,7 @@ public final class MainFrame extends BaseFrame {
     }
 
     private void finishVedeo() {
-        stopVedeo();
+        stopVideo();
         application().playNext();
     }
 
@@ -690,6 +693,7 @@ public final class MainFrame extends BaseFrame {
         statusBar.setVisible(statusBarVisible);
         viewStatusBarAction.select(statusBarVisible);
         fileChooser.setCurrentDirectory(new File(prefs.get("chooserDirectory", ".")));
+        application().setLastOpenedFolder(new File(prefs.get("chooserDirectory", ".")));
         String recentMedia = prefs.get("recentMedia", "");
         if (recentMedia.length() > 0) {
             List<String> mrls = Arrays.asList(prefs.get("recentMedia", "").split("\\|"));
@@ -710,8 +714,8 @@ public final class MainFrame extends BaseFrame {
             prefs.putInt    ("frameHeight"     , getHeight());
             prefs.putBoolean("alwaysOnTop"     , isAlwaysOnTop());
             prefs.putBoolean("statusBar"       , statusBar.isVisible());
-            if(fileChooser.getSelectedFile()!=null){
-                prefs.put       ("chooserDirectory", fileChooser.getSelectedFile().toString());
+            if(application().getLastOpenedFolder()!=null){
+                prefs.put   ("chooserDirectory", application().getLastOpenedFolder().toString());
             }
 
 

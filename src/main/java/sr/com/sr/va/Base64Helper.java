@@ -15,7 +15,7 @@ public class Base64Helper {
     public void convert(){
         String filePath = "."+ File.separator;
         
-        String newFileName = "05-મે-2020.pdf";
+        String newFileName = "2020_12_chetavani.pdf";
         String originalFileName = "input_base64.txt";
 
         String sourceFile = filePath + originalFileName;
@@ -27,7 +27,7 @@ public class Base64Helper {
          */
         String encodedString = readFile(sourceFile);
 //        System.out.println(encodedString);
-        String destinationFile = filePath + newFileName;
+        String destinationFile = "D:\\AS\\CLASSIFIED\\moksmarg\\chetavani\\2018"+ File.separator + newFileName;
 
         saveBase64StringToFile(destinationFile, encodedString);
     }

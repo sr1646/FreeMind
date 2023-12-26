@@ -1,9 +1,6 @@
 package sr.utility;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,10 +18,23 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static sr.utility.Output.*;
+import static sr.utility.Output.debug;
+import static sr.utility.Output.decorate;
+import static sr.utility.Output.drawProgressBar;
+import static sr.utility.Output.printLine;
+import static sr.utility.Output.startProgress;
+import static sr.utility.Output.stopProgress;
 
 public class FileHelper {
 
@@ -187,6 +197,9 @@ public class FileHelper {
     public static boolean writeFile(String line,String fileName){
 
         BufferedWriter writer = null;
+        if(line==null){
+            line="null";
+        }
         try {
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName,true), encoding));
             writer.write(line);
@@ -259,6 +272,8 @@ public class FileHelper {
     }
 
     private  static void close(BufferedReader reader) {
+        if(reader==null)
+            return;
         try {
             reader.close();
         } catch (IOException e) {
@@ -343,18 +358,9 @@ public class FileHelper {
         setFileOpernation(FileHelper.FileOpernation.MOVE);
     }
 
-    public static String objectToJSON(Object o){
-        ObjectMapper mapper = new ObjectMapper();
-        String json = null;
-        try {
-            json = mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        return json;
-    }
+
     private void saveDVDDataToFile(String sourceFolderStr, String destinationFolderStr, List<DVDHelper> dvdListStore, List<String> dvdDetail) {
-        String dvdDetailJson = objectToJSON(dvdListStore);
+        String dvdDetailJson = JsonUtil.objectToJSON(dvdListStore);
             List<String> dvdFileInfo=new ArrayList<>();
             dvdFileInfo.add(sourceFolderStr);
             dvdFileInfo.add(destinationFolderStr);

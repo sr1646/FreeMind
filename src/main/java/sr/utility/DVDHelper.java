@@ -20,11 +20,12 @@ public class DVDHelper {
     public static final Integer STORED_DVD_FILE_NAME_INDEX = 4;
     public static final Integer STORED_DVD_DATA_SIZE = 4;
     private static final long GIGABYTE = 1024;
-//    private static final float DVD_MAX_CAPACITY_IN_GB = 4.37f;
-//    private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
-//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 50;
-    private static final long DVD_MAX_CAPACITY_IN_MB = 20;
-    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 1;
+    private static final float DVD_MAX_CAPACITY_IN_GB = 4.37f;
+    private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
+    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 50;
+
+    //    private static final long DVD_MAX_CAPACITY_IN_MB = 20;
+//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 1;
     private static final long ALLOW_TOTAL_DVD_AS_OF_NOW = 3;
     private static boolean MAX_DVD_ADDED = false;
     private static final long MAX_SIZE_IN_MB = DVD_MAX_CAPACITY_IN_MB * GIGABYTE * GIGABYTE;
