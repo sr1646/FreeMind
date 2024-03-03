@@ -41,6 +41,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static uk.co.caprica.vlcjplayer.Application.application;
 
@@ -90,10 +91,11 @@ final public class ControlsPane extends BasePanel {
 
     private final JButton moveFavouriteFolder;
 
-    private final List<JButton> favFolderList=new ArrayList<>();
+    private List<JButton> favFolderList=new ArrayList<>();
 
     private final JSlider volumeSlider;
     private final FavPane favPane;
+
 
     ControlsPane(MediaPlayerActions mediaPlayerActions, FavPane favPane) {
         this.favPane=favPane;
@@ -191,7 +193,8 @@ final public class ControlsPane extends BasePanel {
                     return;
                 }
                 if(Application.application().isFolderExist(folder)){
-                    AlertBox.infoBox("Favourite Folder Already created with this name","Already exist folder");
+                    Application.application().addFavouriteFileTo(folder);
+                    AlertBox.infoBox("Favourite Folder Already created with this name---> marked as favourite for current video","Already exist folder");
                     return;
                 }
                 createFavFolder(folder);
@@ -235,17 +238,29 @@ final public class ControlsPane extends BasePanel {
     }
 
     public void createFavFolder(String folder) {
+        Application.application().addFavFolder(folder);
+        favFolderList=new ArrayList<>();
+        Application.application().setFavFolderButtonList(favFolderList);
+        favPane.removeAll();
+        Map<String, List<File>> favFolder= Application.application().getFavFolder();
+        for(Map.Entry<String,List<File>> favFolderEntry:favFolder.entrySet()) {
+            addButtonOnBar(favFolderEntry.getKey());
+        }
+        Application.application().addFavouriteFileTo(folder);
+    }
+
+    private void addButtonOnBar(String folder) {
         JButton newFolder=new StandardButton();
         newFolder.setToolTipText(folder);
         favFolderList.add(newFolder);
         final int currentFolderCount = favFolderList.size();
         final int folderDisplayCharacter=28;
-        final int folderNameLength=folder.length();
+        final int folderNameLength= folder.length();
         String buttonName="";
         if(folderNameLength>folderDisplayCharacter){
-            buttonName=currentFolderCount+" - "+folder.substring(folderNameLength-folderDisplayCharacter);
+            buttonName=currentFolderCount+" - "+ folder.substring(folderNameLength-folderDisplayCharacter);
         }else {
-            buttonName=currentFolderCount+" - "+folder;
+            buttonName=currentFolderCount+" - "+ folder;
         }
         newFolder.setText(buttonName);
 
@@ -258,7 +273,6 @@ final public class ControlsPane extends BasePanel {
         }
         favPane.add(newFolder,miglayoutConstraint);
         newFolder.addActionListener(new FavFolderButtonEventListener());
-        Application.application().addFavFolder(folder);
     }
 
     @Subscribe

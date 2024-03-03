@@ -87,7 +87,7 @@ public class FileHelper {
         long gb = (totalMB/GIGABYTE);
         int roundGb=Math.round(gb);
         int remainingMB= (int) (totalMB-(roundGb*GIGABYTE));
-        return ""+roundGb+"GB, "+remainingMB+"MB";
+        return " "+roundGb+"GB, "+remainingMB+"MB";
     }
     private  void showFile(File file) {
         if (file.isDirectory()) {

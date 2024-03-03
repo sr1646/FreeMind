@@ -20,20 +20,28 @@ public class DVDHelper {
     public static final Integer STORED_DVD_FILE_NAME_INDEX = 4;
     public static final Integer STORED_DVD_DATA_SIZE = 4;
     private static final long GIGABYTE = 1024;
-    private static final float DVD_MAX_CAPACITY_IN_GB = 4.37f;
-    private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
-    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 50;
+    //******************************************************************************************
+    //************************        EDIT BELOW VARIABLES AS NEEDED        ********************
+    //******************************************************************************************
+    private static final float DVD_MAX_CAPACITY_IN_GB = 2f;
+//    private static final long DVD_MAX_CAPACITY_IN_MB = (long) (DVD_MAX_CAPACITY_IN_GB*GIGABYTE);
+//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 80;
+    private static final long DVD_MAX_CAPACITY_IN_MB = 20;
+    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 1;
+    private static int currentDVD = 5;
+    private static final long ALLOW_TOTAL_DVD_DISK_AS_OF_NOW = 1;
+    //******************************************************************************************
+    //************************      EDIT BELOW VARIABLES AS NEEDED END      ********************
+    //******************************************************************************************
 
-    //    private static final long DVD_MAX_CAPACITY_IN_MB = 20;
-//    private static final long ALLOWED_FREE_SPACE_OF_DVD_IN_MB = 1;
-    private static final long ALLOW_TOTAL_DVD_AS_OF_NOW = 3;
+
     private static boolean MAX_DVD_ADDED = false;
     private static final long MAX_SIZE_IN_MB = DVD_MAX_CAPACITY_IN_MB * GIGABYTE * GIGABYTE;
 
 
     private static List<File> fileBiggerThenDVD = new ArrayList<>();
     private static Queue<File> skippedFile = new LinkedList<>();
-    private static int currentDVD = 0;
+
     private static int skippedFileRound = 1;
 
     private List<File> filesToMove = new ArrayList<>();
@@ -42,13 +50,10 @@ public class DVDHelper {
 
     public DVDHelper() {
     }
-    private long getSizeInMB() {
-        long mb = ((size) / GIGABYTE / GIGABYTE);
-        return mb;
-    }
+
 
     private long getFreeMB() {
-        return DVD_MAX_CAPACITY_IN_MB - getSizeInMB();
+        return DVD_MAX_CAPACITY_IN_MB - FileHelper.getSizeInMB(size);
     }
 
     private boolean addFile(File file, List<DVDHelper> dvdList) {
@@ -98,8 +103,8 @@ public class DVDHelper {
     }
 
     private void addDVD(List<DVDHelper> dvdList) {
-        if(currentDVD<ALLOW_TOTAL_DVD_AS_OF_NOW){
-            printLine("new dvd container added for regular dvd making recursive call: for index: " + (++currentDVD));
+        if(currentDVD< ALLOW_TOTAL_DVD_DISK_AS_OF_NOW){
+            printLine("new dvd container added for regular dvd making recursive call: for index: " + (currentDVD++));
             dvdList.add(new DVDHelper());
         }else{
             //stop the operation we have already reached allowed dvd
@@ -118,7 +123,7 @@ public class DVDHelper {
     public String dvdInfo(){
         return  "DVD Details {" +
                 "total filesToMove=" + filesToMove.size() +
-                ", size=" + getSizeInMB() + "MB" +
+                ", size=" + FileHelper.getSizeInGB(size) +
                 '}';
     }
     @Override

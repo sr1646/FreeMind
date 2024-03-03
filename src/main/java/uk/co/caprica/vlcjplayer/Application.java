@@ -41,11 +41,11 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +86,12 @@ public final class Application {
     private File currentlyPlayingFile;
     private boolean currentlyPlayingAudioFile;
     private List<File> favFileList=new ArrayList<File>();
-    private Map<String,List<File>> favFolder =new HashMap<String,List<File>>();
+
+    public Map<String, List<File>> getFavFolder() {
+        return favFolder;
+    }
+
+    private Map<String,List<File>> favFolder =new TreeMap<>();
     private List<JButton> favFolderButtonList;
     private Icon favButtonIcon;
     public void PlayPrevVideo() {

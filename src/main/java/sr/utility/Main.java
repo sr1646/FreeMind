@@ -24,8 +24,11 @@ import static sr.utility.Output.printLine;
 
 public class Main {
 
+//    public static final String NS_SOURCE_FOLDER = "D:\\Hell\\fantasty\\pornstar";
+//    public static final String NS_DESTINATION_FOLDER = "D:\\Hell\\fantasty\\backup_done\\BD_R_data";
     public static final String NS_SOURCE_FOLDER = "N:\\Tester\\source";
     public static final String NS_DESTINATION_FOLDER = "N:\\Tester\\output";
+
 
     private void showMenu(){
         for(Task task:Task.values()){
@@ -36,9 +39,9 @@ public class Main {
     }
     public void driver(){
         showMenu();
-//        Task task = getTaskFromStandardInput();
-        Task task=Task.START_VLC ;
-//        print("Selected Task: "+task);
+        Task task = getTaskFromStandardInput();
+//        Task task=Task.START_VLC ;
+        print("Selected Task: "+task);
 
         switch (task){
             case SHOW_ALL_FOLDER:
