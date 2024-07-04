@@ -270,6 +270,27 @@ public class FileHelper {
         }
         return list;
     }
+    public static  String readFileGetString(String fileName){
+        BufferedReader reader = null;
+        StringBuilder stringBuilder=new StringBuilder();
+        try {
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), encoding));
+            int count = 0;
+            for (String line; (line = reader.readLine()) != null;) {
+                stringBuilder.append(line).append("\n");
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            Output.exception(e);
+        } catch (FileNotFoundException e) {
+            Output.exception(e);
+        } catch (IOException e) {
+            Output.exception(e);
+        } finally {
+            close(reader);
+        }
+        return stringBuilder.toString();
+    }
 
     private  static void close(BufferedReader reader) {
         if(reader==null)

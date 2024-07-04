@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JsonUtil {
@@ -53,12 +55,22 @@ public class JsonUtil {
     }
     public static List getListFromJSon(String setJson) {
         ObjectMapper mapper = new ObjectMapper();
-        List set=null;
+        List list=null;
         try {
-            set=mapper.readValue(setJson, ArrayList.class);
+            list=mapper.readValue(setJson, ArrayList.class);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        return set;
+        return list;
+    }
+    public static Map<String ,Object>  getMapFromJSon(String setJson) {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String ,Object> map=null;
+        try {
+            map=mapper.readValue(setJson, HashMap.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }

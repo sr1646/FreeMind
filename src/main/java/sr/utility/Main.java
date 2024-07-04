@@ -39,8 +39,8 @@ public class Main {
     }
     public void driver(){
         showMenu();
-        Task task = getTaskFromStandardInput();
-//        Task task=Task.START_VLC ;
+//        Task task = getTaskFromStandardInput();
+        Task task=Task.PROFIT_CALCULATOR_CUMULATIVE_FOR_DAILY_EARNING ;
         print("Selected Task: "+task);
 
         switch (task){
@@ -93,12 +93,72 @@ public class Main {
 //                compareFolder("C:\\as\\experiment\\original","C:\\as\\experiment\\test");
                 compareFolder(NS_SOURCE_FOLDER,NS_DESTINATION_FOLDER);
                 break;
+                case READ_LIST_FROM_JSON_FILE:
+                readList();
+                break;
+                case PROFIT_CALCULATOR_CUMULATIVE_FOR_DAILY_EARNING:
+                calulateProfit();
+                break;
             case START_VLC:
                 runVlc();
                 break;
             default :
                 throw new IllegalStateException("Unexpected value: " + task);
         }
+    }
+
+    private void calulateProfit() {
+//        System.out.println("Please enter initial amount: ");
+//        Scanner stdIn=new Scanner(System.in);
+//        int initalAmmount=stdIn.nextInt();
+//        System.out.println("Please enter expected earning in %: ");
+//        int earningPercentage=stdIn.nextInt();
+//        System.out.println("Please enter profit calculation for number of days:  ");
+//        int days=stdIn.nextInt();
+
+        int initalAmmount=15000;
+        int earningPercentage=10;
+        int days=40;
+        float earnAmount=initalAmmount;
+        float intrest=0;
+
+        System.out.println("\n\n--------------------------------------------------------------------\n");
+        System.out.print("initial ammount: "+initalAmmount+" \n intrest earning: "+earningPercentage+"%  \n days: "+days);
+        System.out.print("\n--------------------------------------------------------------------\n");
+        for(int i=1;i<=days;i++){
+            System.out.printf(" day %d: start of day amount: %.2f",i,earnAmount);
+            intrest = earnAmount * earningPercentage / 100;
+            earnAmount+=intrest;
+            System.out.printf(", earning : %.2f, end of day amount: %.2f \n",intrest,earnAmount);
+        }
+        System.out.println("\n--------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------");
+        float month = days / (float)20;
+        System.out.printf("\n\nAfter %d days equivalent to %.2f month/s you will have %.2f from investment of %d considering daily earning %d percentage",days,month,earnAmount,initalAmmount,earningPercentage);
+        System.out.println("\n\n--------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------");
+    }
+
+    private void readList() {
+        String filePath = "."+ File.separator;
+
+        String newFileName = "N:\\CLASSIFIED\\Share market\\F&O_largeCap.txt";
+        String originalFileName = "input_base64.txt";
+
+        String sourceFile = filePath + originalFileName;
+        String jsonData=FileHelper.readFileGetString(originalFileName);
+        Map<String ,Object> map=JsonUtil.getMapFromJSon(jsonData);
+        List<Map<String, Object >> list=(List) map.get("data");
+
+        List<String> symbolList=new ArrayList<>();
+        for(Map<String ,Object> share:list){
+            String symbol = String.valueOf(share.get("s")).substring(4);
+            symbolList.add(symbol);
+        }
+        FileHelper.writeFile(symbolList,newFileName);
+        System.out.println("\nData stored in : "+newFileName);
     }
 
     private void processDvdData() {

@@ -1,22 +1,15 @@
 <?php
-
-if(array_key_exists('file', $_FILES)){
-   if ($_FILES['file']['error'] === UPLOAD_ERR_OK) {
-      // echo 'upload was successful';
-   } else {
-      die("Upload failed with error code " . $_FILES['file']['error']);
-   }
-}
    if(isset($_FILES['file'])){
       $errors= array();
       $file_name = $_FILES['file']['name'];
       $file_size =$_FILES['file']['size'];
       $file_tmp =$_FILES['file']['tmp_name'];
       $file_type=$_FILES['file']['type'];
-      $file_path = "uploads/".$file_name;
-      $dir_path = "uploads";
+      $uploadLocation="uploads/data";
+      $file_path = $uploadLocation."/".$file_name;
+      $dir_path = $uploadLocation;
    
-      // echo "file size = $file_size";
+      
       $extensions= array("html","php","js","jpeg","jpg","png","webp","gif");
       
      
@@ -29,8 +22,8 @@ if(array_key_exists('file', $_FILES)){
             mkdir($dir_path, 0777, true);
             if(file_exists($dir_path) && !file_exists($file_path)){
 
-               if(move_uploaded_file($file_tmp,"uploads/".$file_name)){
-                  echo "File : <a href='uploads/$file_name'>$file_name</a>";
+               if(move_uploaded_file($file_tmp,"$uploadLocation/".$file_name)){
+                  echo "File : <a href='$uploadLocation/$file_name'>$file_name</a>";
                }else{
                   echo $errors;
                }
@@ -39,8 +32,9 @@ if(array_key_exists('file', $_FILES)){
                echo $errors;
             }
          }else{
-            move_uploaded_file($file_tmp,"uploads/".$file_name);
-            echo "File : <a href='uploads/$file_name'>$file_name</a>";
+            move_uploaded_file($file_tmp,"$uploadLocation/".$file_name);
+            echo "<BR>File Uploaded Successfully  Click on file to download if you wamt to check uploaded file<BR>";
+            echo "<a class=\"button\" href='$uploadLocation/$file_name'>$file_name</a>";
          }
       }else{
          print_r($errors);

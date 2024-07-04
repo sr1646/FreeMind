@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.List;
 
 public class Base64Helper {
     public void convert(){
@@ -25,7 +22,7 @@ public class Base64Helper {
         console.log(document.getElementById('PdfString').value);
         // press enter and there will be option for copy at the end of output string  paste it into input base64 with notepad++
          */
-        String encodedString = readFile(sourceFile);
+        String encodedString = FileHelper.readFileGetString(sourceFile);
 //        System.out.println(encodedString);
         String destinationFile = "D:\\AS\\CLASSIFIED\\moksmarg\\chetavani\\2018"+ File.separator + newFileName;
 
@@ -47,25 +44,5 @@ public class Base64Helper {
             throw new RuntimeException(e);
         }
     }
-    private  String readFile(String file){
-        List<String> fileData = new FileHelper().readFile(file);
-        int capacity = 1000;
-        StringBuilder strFile=new StringBuilder(capacity);
-        for (String line : fileData) {
-            strFile.append(line).append("\n");
-        }
-        return strFile.toString();
-    }
-    private  String readBinaryFileInBase64String(String fileName) {
-        byte[] input_file = new byte[0];
-        try {
-            input_file = Files.readAllBytes(Paths.get(fileName));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
-        byte[] encodedBytes = Base64.getEncoder().encode(input_file);
-        String encodedString =  new String(encodedBytes);
-        return encodedString;
-    }
 }
